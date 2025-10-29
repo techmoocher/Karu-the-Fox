@@ -96,3 +96,21 @@ This project uses the Gemini API, which requires a secret key.
 ### 6. (Optional) Add Your Music
 
 The music player scans the `music/` folder. For the app to find your songs, you must follow a specific folder structure:
+
+```
+music/
+│
+├── My-Favorite-Song/
+│    ├── My-Favorite-Song_Author-Name.mp3
+│    └── thumbnail.jpg
+│
+└── Another-Song_Author-Name/
+     ├── Another-Song_Author-Name.mp3
+     └── thumbnail.png
+```
+
+**Note:** "Interstellar-Main-Theme" is the folder name, with the file "Interstellar-Main-Theme_Hans-Zimmer" inside
+
+* Each song **must** be in its own sub-folder.
+* The app will look for the first `.mp3` file in that sub-folder.
+* The app will look for a `thumbnail.jpg`, `thumbnail.png`, or `thumbnail.jfif` file for the album art.
