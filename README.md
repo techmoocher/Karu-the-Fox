@@ -114,3 +114,40 @@ music/
 * Each song **must** be in its own sub-folder.
 * The app will look for the first `.mp3` file in that sub-folder.
 * The app will look for a `thumbnail.jpg`, `thumbnail.png`, or `thumbnail.jfif` file for the album art.
+
+### 7. Run the App
+
+You're all set! Launch the application by running:
+
+```bash
+python main.py
+```
+
+## 📂 Project Structure
+
+Here's a quick overview of the project's layout:
+
+```
+Karu-the-Fox/
+│
+├── .env                # Your secret API key
+├── .env.example        # API key template
+├── config.json         # Stores music player settings
+├── main.py             # The main entry point for the app
+├── requirements.txt    # Python dependencies
+│
+├── images/             # All app icons and fox animations
+├── music/              # Folder for your music (see setup)
+│
+└── src/                # All application source code
+    ├── __init__.py
+    ├── chat.py         # Chat window UI and API logic
+    ├── constants.py    # Manages all file paths
+    ├── desktop_pet.py  # The core DesktopPet class and logic
+    ├── music_player.py # The music player UI and logic
+    └── onboarding.py   # Speech bubble and dialog classes
+```
+
+## 📄 License
+
+This project is licensed under the GNU General Public License v3.0. See the LICENSE file for more details.
