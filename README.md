@@ -148,7 +148,9 @@ You're all set! Launch the application by running:
 python main.py
 ```
 
-## 📂 Project Structure
+---
+
+## 📂 Directory Structure
 
 Here's a quick overview of the project's layout:
 
@@ -172,6 +174,8 @@ Karu-the-Fox/
     ├── music_player.py # The music player UI and logic
     └── onboarding.py   # Speech bubble and dialog classes
 ```
+
+---
 
 ## 📄 License
 
