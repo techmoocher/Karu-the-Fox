@@ -10,8 +10,8 @@ Karu is a clever and friendly virtual desktop pet . Built with Python and PySide
 ## 📸 Preview
 
 <div align="center">
-    <img alt="Fox standing still" src="./previews/preview-1.jpg" width=120px height=100px/>
-    <img alt="Fox shocked for being airborned" src="./previews/preview-2.jpg" width=120px height=100px/>
+    <img alt="Fox standing still" src="./previews/preview-1.jpg" width=250px height=200px/>
+    <img alt="Fox shocked for being airborned" src="./previews/preview-2.jpg" width=250px height=200px/>
 </div>
 
 ---
