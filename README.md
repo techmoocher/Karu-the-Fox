@@ -39,8 +39,8 @@ Karu is a clever and friendly virtual desktop pet . Built with Python and PySide
 ## 💻 Technology Stack
 
 * **Python 3**
-* **PySide6** (Qt for Python) for the application framework and UI.
-* **Google Gemini API** for the generative AI chat functionality.
+* **PySide6** (Qt for Python) - *Application framework and UI*.
+* **Google Gemini API** - *AI-powered chat functionality*.
 
 ---
 
@@ -55,20 +55,22 @@ Make sure you have **Python 3.10** or newer installed.
 ### 2. Clone the Repository
 
 ```bash
-git clone [https://github.com/your-username/karu-the-fox.git](https://github.com/your-username/karu-the-fox.git)
-cd karu-the-fox
+git clone https://github.com/your-username/karu-the-fox.git
+cd Karu-the-Fox
 ```
 
 ### 3. Set Up a Virtual Environment
 
 It's highly recommended to use a virtual environment.
 
-* **Windows:**
+* **For Windows:**
+
     ```bash
     python -m venv venv
     venv\Scripts\activate
     ```
-* **macOS / Linux:**
+* **For MacOS / Linux:**
+
     ```bash
     python3 -m venv venv
     source venv/bin/activate
@@ -87,6 +89,7 @@ pip install -r requirements.txt
 This project uses the Gemini API, which requires a secret key.
 
 1.  Copy the example `.env` file to create your own:
+
     ```bash
     # On Windows (Command Prompt)
     copy .env.example .env
@@ -97,6 +100,7 @@ This project uses the Gemini API, which requires a secret key.
 2.  Open the new `.env` file (it's hidden by default) in a text editor.
 3.  Get your Gemini API key from the [Google AI Studio](https://aistudio.google.com/app/apikey).
 4.  Paste your key into the file:
+    
     ```
     # .env
     GEMINI_API_KEY=YOUR_API_KEY_GOES_HERE
