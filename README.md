@@ -9,7 +9,11 @@ Karu is a clever and friendly virtual desktop pet . Built with Python and PySide
 
 ## 📸 Preview
 
-[![Watch the Karu Demo](previews/live-demo-youtube-thumbnail.png)](https://www.youtube.com/watch?v=LDVFWf0XFPM)
+<a href="https://www.youtube.com/watch?v=LDVFWf0XFPM" target="_blank">
+    <img alt="Karu the Fox Live Demo thumbnail" src="./previews/live-demo-youtube-thumbnail.png" width=80% height=80%/>
+</a>
+
+<!-- [![Watch the Karu Demo](previews/live-demo-youtube-thumbnail.png)](https://www.youtube.com/watch?v=LDVFWf0XFPM) -->
 
 <br>
 <div align="center">
