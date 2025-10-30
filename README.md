@@ -124,6 +124,7 @@ music/
 
 ***Example:***
 
+```
 music/
 │
 ├── Interstellar-Main-Theme/
