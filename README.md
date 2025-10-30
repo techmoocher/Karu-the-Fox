@@ -122,7 +122,18 @@ music/
      └── thumbnail.png
 ```
 
-**Note:** "Interstellar-Main-Theme" is the folder name, with the file "Interstellar-Main-Theme_Hans-Zimmer" inside
+***Example:***
+
+music/
+│
+├── Interstellar-Main-Theme/
+│    ├── Interstellar-Main-Theme_Hans-Zimmer.mp3
+│    └── thumbnail.jpg
+│
+└── Nang-Tho/
+     ├── Nang-Tho_Hoang-Dung.mp3
+     └── thumbnail.png
+```
 
 * Each song **must** be in its own sub-folder.
 * The app will look for the first `.mp3` file in that sub-folder.
