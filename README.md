@@ -117,7 +117,7 @@ music/
 │    ├── My-Favorite-Song_Author-Name.mp3
 │    └── thumbnail.jpg
 │
-└── Another-Song_Author-Name/
+└── Another-Song/
      ├── Another-Song_Author-Name.mp3
      └── thumbnail.png
 ```
