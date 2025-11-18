@@ -77,23 +77,17 @@ It's highly recommended to use a virtual environment.
     ```bash
     python -m venv venv
     venv\Scripts\activate
+    pip install -r requirements.txt
     ```
 * **For MacOS / Linux:**
 
     ```bash
-    python3 -m venv venv
+    python3 -m venv .venv
     source venv/bin/activate
+    pip install -r requirements.txt
     ```
 
-### 4. Install Dependencies
-
-Install all the required Python packages:
-
-```bash
-pip install -r requirements.txt
-```
-
-### 5. Configure the API key
+### 4. Configure the API key
 
 This project uses the Gemini API, which requires a secret key.
 
@@ -115,7 +109,7 @@ This project uses the Gemini API, which requires a secret key.
     GEMINI_API_KEY=YOUR_API_KEY_GOES_HERE
     ```
 
-### 6. (Optional) Add Your Music
+### 5. (Optional) Add Your Music
 
 The music player scans the `music/` folder. For the app to find your songs, you must follow a specific folder structure:
 
@@ -149,7 +143,7 @@ music/
 * The app will look for the first `.mp3` file in that sub-folder.
 * The app will look for a `thumbnail.jpg`, `thumbnail.png`, or `thumbnail.jfif` file for the album art.
 
-### 7. Run the App
+### 6. Run the App
 
 You're all set! Launch the application by running:
 
