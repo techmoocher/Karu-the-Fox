@@ -16,6 +16,7 @@ from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from .music_player import MusicPlayerWindow
 from .onboarding import SpeechBubble, RatingDialog
 from .chat import ChatWindow
+from .pomodoro import PomodoroWindow
 from .constants import (BASE_DIR, IMAGE_DIR, CONFIG_FILE, ENV_FILE, 
                         LOGO_ICON)
 
@@ -105,6 +106,12 @@ class DesktopPet(QWidget):
         ### Chat Window Initialization ###
         self.chat_window = ChatWindow()
 
+        ### Pomodoro Timer Initialization ###
+        self.pomodoro_window = PomodoroWindow(self)
+        # When pomodoro completes, trigger a wag to acknowledge
+        if hasattr(self.pomodoro_window, "pomodoro_finished"):
+            self.pomodoro_window.pomodoro_finished.connect(self.initiate_wagging)
+
         ### Music Player Initialization ###
         self.config = self._load_or_create_config()
         self._initialize_music_player()
@@ -116,7 +123,8 @@ class DesktopPet(QWidget):
         self.show()
         
         app = QApplication.instance()
-        app.aboutToQuit.connect(self.save_config)
+        if app is not None:
+            app.aboutToQuit.connect(self.save_config)
 
     def _initialize_music_player(self):
         self.tray_actions = {
@@ -224,6 +232,10 @@ class DesktopPet(QWidget):
         chat_action = QAction("Chat with Karu", self)
         chat_action.triggered.connect(self.open_chat_window)
         tray_menu.addAction(chat_action)
+
+        pomodoro_action = QAction("Pomodoro Timer", self)
+        pomodoro_action.triggered.connect(self.open_pomodoro_window)
+        tray_menu.addAction(pomodoro_action)
         
         self.tray_actions['play_pause'].triggered.connect(self.music_player_window.toggle_play_pause)
         self.tray_actions['prev'].triggered.connect(self.music_player_window.prev_song)
@@ -248,7 +260,7 @@ class DesktopPet(QWidget):
         tray_menu.addAction(self.toggle_action)
         tray_menu.addSeparator()
         exit_action = QAction("Exit", self)
-        exit_action.triggered.connect(QApplication.instance().quit)
+        exit_action.triggered.connect(QApplication.quit)
         tray_menu.addAction(exit_action)
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
@@ -266,6 +278,11 @@ class DesktopPet(QWidget):
         """
         self.music_player_window.show()
         self.music_player_window.activateWindow()
+
+    def open_pomodoro_window(self):
+        """Show the pixel-style pomodoro timer."""
+        self.pomodoro_window.show()
+        self.pomodoro_window.activateWindow()
 
     def start_intro_sequence(self):
         self.music_menu.setEnabled(False)
