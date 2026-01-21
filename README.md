@@ -2,12 +2,10 @@
 
 Karu is a clever and friendly virtual desktop pet . Built with Python and PySide6, Karu can chat with you, play music, and react to your presence.
 
-<!-- *(Suggestion: Record a 5-10 second GIF of Karu walking, sleeping, and the chat window opening, and place it here!)*
-`![Karu Demo GIF](link-to-your-demo-gif.gif)` -->
-
 ---
 
 ## 📸 Preview
+
 <div align="center">
     <a href="https://www.youtube.com/watch?v=LDVFWf0XFPM" target="_blank">
         <img alt="Karu the Fox Live Demo thumbnail" src="./previews/live-demo-youtube-thumbnail.png" width=80% height=80%/>
@@ -18,6 +16,7 @@ Karu is a clever and friendly virtual desktop pet . Built with Python and PySide
 <!-- [![Watch the Karu Demo](previews/live-demo-youtube-thumbnail.png)](https://www.youtube.com/watch?v=LDVFWf0XFPM) -->
 
 <br>
+
 <div align="center">
     <img alt="Fox standing still" src="./previews/preview-1.jpg" width=250px height=200px/>
     <img alt="Fox shocked for being airborned" src="./previews/preview-2.jpg" width=250px height=200px/>
@@ -79,6 +78,7 @@ It's highly recommended to use a virtual environment.
     venv\Scripts\activate
     pip install -r requirements.txt
     ```
+
 * **For MacOS / Linux:**
 
     ```bash
@@ -91,7 +91,7 @@ It's highly recommended to use a virtual environment.
 
 This project uses the Gemini API, which requires a secret key.
 
-1.  Copy the example `.env` file to create your own:
+1. Copy the example `.env` file to create your own:
 
     ```bash
     # On Windows (Command Prompt)
@@ -100,10 +100,11 @@ This project uses the Gemini API, which requires a secret key.
     # On macOS/Linux
     cp .env.example .env
     ```
-2.  Open the new `.env` file (it's hidden by default) in a text editor.
-3.  Get your Gemini API key from the [Google AI Studio](https://aistudio.google.com/app/apikey).
-4.  Paste your key into the file:
-    
+
+2. Open the new `.env` file (it's hidden by default) in a text editor.
+3. Get your Gemini API key from the [Google AI Studio](https://aistudio.google.com/app/apikey).
+4. Paste your key into the file:
+
     ```
     # .env
     GEMINI_API_KEY=YOUR_API_KEY_GOES_HERE
