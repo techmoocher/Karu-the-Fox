@@ -1,2 +1,2 @@
-PySide6
-dotenv
+PySide6==6.10.1
+dotenv==1.2.1
