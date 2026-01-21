@@ -102,10 +102,11 @@ This project uses the Gemini API, which requires a secret key.
     ```
 
 2. Open the new `.env` file (it's hidden by default) in a text editor.
-3. Get your Gemini API key from the [Google AI Studio](https://aistudio.google.com/app/apikey).
-4. Paste your key into the file:
+3. Go to [Google AI Studio](https://aistudio.google.com/app/apikey).
+4. Navigate to **Dashboard** > **API Keys** and create a new API key if you don't already have one.
+5. Paste your key into the `.env` file:
 
-    ```
+    ```bash
     # .env
     GEMINI_API_KEY=YOUR_API_KEY_GOES_HERE
     ```
@@ -140,9 +141,10 @@ music/
      └── thumbnail.png
 ```
 
-* Each song **must** be in its own sub-folder.
-* The app will look for the first `.mp3` file in that sub-folder.
-* The app will look for a `thumbnail.jpg`, `thumbnail.png`, or `thumbnail.jfif` file for the album art.
+**Notes:**
+*- Each song **must** be in its own sub-folder.*
+*- The app will look for the first `.mp3` file in provided sub-folder.*
+*- The app will look for a `thumbnail.jpg`, `thumbnail.png`, or `thumbnail.jfif` file for the album art.*
 
 ### 6. Run the App
 
