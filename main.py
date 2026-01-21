@@ -7,7 +7,7 @@ from src.desktop_pet import DesktopPet
 
 dotenv.load_dotenv()
 
-if __name__ == '__main__':
+def main():
     app = QApplication(sys.argv)
 
     signal.signal(signal.SIGINT, lambda sig, frame: app.quit())
@@ -17,3 +17,6 @@ if __name__ == '__main__':
 
     pet = DesktopPet()
     sys.exit(app.exec())
+
+if __name__ == '__main__':
+    main()

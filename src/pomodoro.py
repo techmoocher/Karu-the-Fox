@@ -1,79 +1,76 @@
-from typing import TYPE_CHECKING, Optional, cast
-
+import sys
+import json
+from pathlib import Path
 from PySide6.QtWidgets import (
-    QWidget,
-    QLabel,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QSlider,
-    QComboBox,
-    QFrame,
-    QDialog,
+    QWidget, QLabel, QVBoxLayout,
+    QHBoxLayout, QPushButton, QSlider,
+    QComboBox, QFrame, QSystemTrayIcon,
 )
-from PySide6.QtCore import Qt, QTimer, QPoint, QSize, Signal
+from PySide6.QtCore import Qt, QTimer, QPoint
 from PySide6.QtGui import QPixmap, QIcon
-from .constants import IMAGE_DIR
 
-if TYPE_CHECKING:
-    from .desktop_pet import DesktopPet
+try:
+    from .constants import IMAGE_DIR, LOGO_ICON, CONFIG_FILE
+except ImportError:  # Allow running standalone
+    SRC_DIR = Path(__file__).resolve().parent
+    if str(SRC_DIR.parent) not in sys.path:
+        sys.path.append(str(SRC_DIR.parent))
+    from constants import IMAGE_DIR, LOGO_ICON, CONFIG_FILE
 
 
 class PomodoroWindow(QWidget):
-    pomodoro_finished = Signal()
-
     THEMES = {
         "Pastel Blue": {
-            "bg": "#d8e9ff",
-            "panel": "#bed9ff",
-            "accent": "#5b8def",
+            "bg": "#D8E9FF",
+            "panel": "#BED9FF",
+            "accent": "#5B8DEF",
             "text": "#112542",
         },
-        "Soft Blue": {
-            "bg": "#e9f4ff",
-            "panel": "#d6eaff",
-            "accent": "#6ea8ff",
-            "text": "#0d233f",
-        },
+        # "Soft Blue": {
+        #     "bg": "#e9f4ff",
+        #     "panel": "#d6eaff",
+        #     "accent": "#6ea8ff",
+        #     "text": "#0d233f",
+        # },
         "Pastel Pink": {
-            "bg": "#ffe4ef",
-            "panel": "#ffd1e4",
-            "accent": "#ff7aa2",
-            "text": "#3f0d21",
+            "bg": "#FFE4EF",
+            "panel": "#FFD1E4",
+            "accent": "#FF7AA2",
+            "text": "#3F0D21",
         },
-        "Soft Pink": {
-            "bg": "#ffe8f2",
-            "panel": "#ffd8ea",
-            "accent": "#ff9ac3",
-            "text": "#3c1226",
-        },
+        # "Soft Pink": {
+        #     "bg": "#ffe8f2",
+        #     "panel": "#ffd8ea",
+        #     "accent": "#ff9ac3",
+        #     "text": "#3c1226",
+        # },
         "Pastel Orange": {
-            "bg": "#fff0dc",
-            "panel": "#ffe2c4",
-            "accent": "#ff9b42",
-            "text": "#3d1f0f",
+            "bg": "#FFF0DC",
+            "panel": "#FFE2C4",
+            "accent": "#FF9B42",
+            "text": "#3D1F0F",
         },
-        "Soft Orange": {
-            "bg": "#fff3e3",
-            "panel": "#ffe6cc",
-            "accent": "#ffae60",
-            "text": "#3a2313",
-        },
+        # "Soft Orange": {
+        #     "bg": "#fff3e3",
+        #     "panel": "#ffe6cc",
+        #     "accent": "#ffae60",
+        #     "text": "#3a2313",
+        # },
         "Pastel Red": {
-            "bg": "#ffe1e1",
-            "panel": "#ffcaca",
-            "accent": "#ff6b6b",
-            "text": "#3d0f0f",
+            "bg": "#FFE1E1",
+            "panel": "#FFCACA",
+            "accent": "#FF6B6B",
+            "text": "#3D0F0F",
         },
-        "Soft Red": {
-            "bg": "#ffe8e8",
-            "panel": "#ffd3d3",
-            "accent": "#ff8a8a",
-            "text": "#3a1010",
-        },
+        # "Soft Red": {
+        #     "bg": "#ffe8e8",
+        #     "panel": "#ffd3d3",
+        #     "accent": "#ff8a8a",
+        #     "text": "#3a1010",
+        # },
     }
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, tray_icon=None):
         super().__init__(parent)
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
@@ -83,27 +80,29 @@ class PomodoroWindow(QWidget):
         self.setMinimumSize(320, 260)
         self.drag_pos = QPoint()
 
+        self.tomato_frame_index = 0
+        self.hourglass_top_frame = True
+
         self.total_seconds = 25 * 60
         self.remaining_seconds = self.total_seconds
         self.is_running = False
-        self.awaiting_ack = False
-        self.alert_dialog = None
 
         self.timer = QTimer(self)
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self._tick)
 
         self.tomato_sprites = self._load_tomato_sprites()
-        self.fox_pixmap = self._load_fox_pixmap()
+        self.hourglass_icons = self._load_hourglass_icons()
+        self.tray_icon = tray_icon if tray_icon is not None else self._init_tray_icon()
 
         self._setup_ui()
-        self._apply_theme("Pastel Orange")
+        self.config = self._load_config()
+        self._apply_persisted_preferences()
         self._update_time_display()
         self._set_tomato_sprite("neutral")
-        self._update_reset_state()
+        self._set_hourglass_icon("empty")
 
     def _setup_ui(self):
-        """Build the window UI layout and controls."""
         self.frame = QFrame(self)
         self.frame.setObjectName("Frame")
         layout = QVBoxLayout(self.frame)
@@ -116,28 +115,29 @@ class PomodoroWindow(QWidget):
         title_row.addWidget(self.title_label)
         title_row.addStretch()
 
-        self.fox_label = QLabel()
-        self.fox_label.setFixedSize(56, 56)
-        self.fox_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._set_fox_pixmap()
-        title_row.insertWidget(0, self.fox_label)
-
-        controls_row = QHBoxLayout()
-        controls_row.addStretch()
-        self.minimize_button = QPushButton("-")
-        self.minimize_button.setFixedSize(28, 28)
-        self.minimize_button.clicked.connect(self.showMinimized)
-        self.close_button = QPushButton("x")
-        self.close_button.setFixedSize(28, 28)
-        self.close_button.clicked.connect(self.hide)
-        controls_row.addWidget(self.minimize_button)
-        controls_row.addWidget(self.close_button)
-        title_row.addLayout(controls_row)
+        self.icon_label = QLabel()
+        self.icon_label.setFixedSize(28, 28)
+        title_row.addWidget(self.icon_label)
 
         self.theme_box = QComboBox()
         self.theme_box.addItems(list(self.THEMES.keys()))
         self.theme_box.currentTextChanged.connect(self._apply_theme)
         title_row.addWidget(self.theme_box)
+
+        controls = QHBoxLayout()
+        controls.setSpacing(6)
+        self.min_button = QPushButton("-")
+        self.min_button.setObjectName("TitleButton")
+        self.min_button.setFixedSize(28, 24)
+        self.min_button.clicked.connect(self.showMinimized)
+        controls.addWidget(self.min_button)
+
+        self.close_button = QPushButton("x")
+        self.close_button.setObjectName("TitleButton")
+        self.close_button.setFixedSize(28, 24)
+        self.close_button.clicked.connect(self.close)
+        controls.addWidget(self.close_button)
+        title_row.addLayout(controls)
         layout.addLayout(title_row)
 
         self.time_label = QLabel()
@@ -177,52 +177,122 @@ class PomodoroWindow(QWidget):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.addWidget(self.frame)
 
-    def _update_reset_state(self):
-        """Enable reset only when the timer is idle or paused."""
-        self.reset_button.setEnabled(not self.is_running)
+    def _load_config(self):
+        defaults = {"pomodoro_duration": 25, "pomodoro_theme": "Pastel Orange"}
+        try:
+            with open(CONFIG_FILE, "r") as f:
+                data = json.load(f)
+            defaults.update({
+                "pomodoro_duration": data.get("pomodoro_duration", defaults["pomodoro_duration"]),
+                "pomodoro_theme": data.get("pomodoro_theme", defaults["pomodoro_theme"]),
+            })
+        except (FileNotFoundError, json.JSONDecodeError, IOError):
+            pass
+        return defaults
+
+    def _persist_config(self):
+        try:
+            with open(CONFIG_FILE, "r") as f:
+                data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError, IOError):
+            data = {}
+
+        data.update({
+            "pomodoro_duration": self.duration_slider.value(),
+            "pomodoro_theme": self.theme_box.currentText(),
+        })
+
+        try:
+            with open(CONFIG_FILE, "w") as f:
+                json.dump(data, f, indent=4)
+        except IOError as e:
+            print(f"Error saving pomodoro config: {e}")
+
+    def _apply_persisted_preferences(self):
+        theme = self.config.get("pomodoro_theme", "Pastel Orange")
+        if theme not in self.THEMES:
+            theme = "Pastel Orange"
+        self.theme_box.blockSignals(True)
+        self.theme_box.setCurrentText(theme)
+        self.theme_box.blockSignals(False)
+        self._apply_theme(self.theme_box.currentText())
+
+        duration = int(self.config.get("pomodoro_duration", 25))
+        duration = max(10, min(60, duration))
+        self.duration_slider.blockSignals(True)
+        self.duration_slider.setValue(duration)
+        self.duration_slider.blockSignals(False)
+        self.total_seconds = duration * 60
+        self.remaining_seconds = self.total_seconds
+        self.duration_label.setText(f"Duration: {duration} min")
 
     def _load_tomato_sprites(self):
-        """Load optional tomato sprites from the pomodoro image folder."""
         sprite_map = {
             "neutral": "tomato-neutral.png",
-            "ticking": "tomato-ticking.png",
+            "ticking": ["tomato-ticking-1.png", "tomato-ticking-2.png"],
             "vibrate": "tomato-vibrate.png",
         }
         sprites = {}
         for key, filename in sprite_map.items():
-            path = IMAGE_DIR / "pomodoro" / filename
-            if path.exists():
-                sprites[key] = QPixmap(str(path))
+            if isinstance(filename, list):
+                frames = []
+                for fname in filename:
+                    path = IMAGE_DIR / "pomodoro" / fname
+                    if path.exists():
+                        frames.append(QPixmap(str(path)))
+                if frames:
+                    sprites[key] = frames
+            else:
+                path = IMAGE_DIR / "pomodoro" / filename
+                if path.exists():
+                    sprites[key] = QPixmap(str(path))
         return sprites
 
-    def _load_fox_pixmap(self):
-        """Load optional fox-with-hourglass header art."""
-        path = IMAGE_DIR / "pomodoro" / "fox-hourglass.png"
-        if path.exists():
-            return QPixmap(str(path))
-        return None
+    def _load_hourglass_icons(self):
+        icon_map = {
+            "half_top": "hourglass-half-top.svg",
+            "half_bottom": "hourglass-half-bottom.svg",
+            "empty": "hourglass-empty.svg",
+        }
+        icons = {}
+        for key, filename in icon_map.items():
+            path = IMAGE_DIR / "pomodoro" / filename
+            if path.exists():
+                icons[key] = QPixmap(str(path))
+        return icons
 
-    def _set_tomato_sprite(self, key):
+    def _init_tray_icon(self):
+        if LOGO_ICON and LOGO_ICON.exists():
+            icon = QIcon(str(LOGO_ICON))
+        else:
+            icon = QIcon()
+        tray = QSystemTrayIcon(icon, self)
+        tray.setVisible(True)
+        return tray
+
+    def _set_tomato_sprite(self, key, frame_index=0):
         pix = self.tomato_sprites.get(key)
+        if isinstance(pix, list):
+            if not pix:
+                return
+            pix = pix[frame_index % len(pix)]
         if pix:
-            target_size = QSize(min(250, pix.width()), min(250, pix.height()))
             self.tomato_label.setPixmap(
-                pix.scaled(target_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.FastTransformation)
+                pix.scaled(64, 64, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             )
         else:
             self.tomato_label.clear()
 
-    def _set_fox_pixmap(self):
-        if self.fox_pixmap:
-            target_size = QSize(min(64, self.fox_pixmap.width()), min(64, self.fox_pixmap.height()))
-            self.fox_label.setPixmap(
-                self.fox_pixmap.scaled(target_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.FastTransformation)
-            )
-        else:
-            self.fox_label.clear()
+    def _set_hourglass_icon(self, key):
+        pix = self.hourglass_icons.get(key)
+        if pix and self.icon_label:
+            scaled = pix.scaled(28, 28, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            self.icon_label.setPixmap(scaled)
+            self.setWindowIcon(QIcon(scaled))
+        elif self.icon_label:
+            self.icon_label.clear()
 
     def _apply_theme(self, name):
-        """Apply the selected palette to the widget stylesheet."""
         colors = self.THEMES.get(name, self.THEMES["Pastel Orange"])
         self.setStyleSheet(
             f"""
@@ -250,8 +320,7 @@ class PomodoroWindow(QWidget):
                 padding: 16px 12px;
                 font-size: 28px;
                 letter-spacing: 1px;
-                color: {colors['text']};
-                font-weight: bold;
+                color: #000000;
             }}
             QSlider::groove:horizontal {{
                 border: 2px solid {colors['accent']};
@@ -277,11 +346,6 @@ class PomodoroWindow(QWidget):
                 padding: 10px 14px;
                 font-weight: bold;
             }}
-            QPushButton#ResetButton:disabled, QPushButton:disabled {{
-                background-color: {colors['panel']};
-                color: {colors['text']};
-                border: 2px dashed {colors['text']};
-            }}
             QPushButton:hover {{
                 background-color: {colors['text']};
                 color: {colors['bg']};
@@ -293,6 +357,23 @@ class PomodoroWindow(QWidget):
             QPushButton#ResetButton {{
                 background-color: {colors['panel']};
                 color: {colors['text']};
+            }}
+            QPushButton#TitleButton {{
+                background-color: transparent;
+                color: {colors['text']};
+                border: 2px solid {colors['accent']};
+                border-radius: 6px;
+                font-weight: bold;
+                padding: 2px 6px;
+                min-width: 0px;
+            }}
+            QPushButton#TitleButton:hover {{
+                background-color: {colors['accent']};
+                color: {colors['bg']};
+            }}
+            QPushButton#TitleButton:pressed {{
+                background-color: {colors['text']};
+                color: {colors['bg']};
             }}
             QComboBox {{
                 background-color: {colors['panel']};
@@ -307,18 +388,19 @@ class PomodoroWindow(QWidget):
             }}
             """
         )
+        if hasattr(self, "theme_box"):
+            self._persist_config()
 
     def _duration_changed(self, value):
-        """Adjust duration (10–60 minutes) when not running."""
         if self.is_running:
             return
         self.total_seconds = value * 60
         self.remaining_seconds = self.total_seconds
         self.duration_label.setText(f"Duration: {value} min")
         self._update_time_display()
+        self._persist_config()
 
     def toggle_timer(self):
-        """Start or pause the timer; initializes remaining time if needed."""
         if self.is_running:
             self._pause_timer()
             return
@@ -329,19 +411,19 @@ class PomodoroWindow(QWidget):
         self.timer.start()
         self.start_button.setText("Pause")
         self.duration_slider.setEnabled(False)
-        self._set_tomato_sprite("ticking")
-        self._update_reset_state()
+        self.tomato_frame_index = 0
+        self.hourglass_top_frame = True
+        self._set_tomato_sprite("ticking", self.tomato_frame_index)
+        self._set_hourglass_icon("half_top")
 
     def _pause_timer(self):
-        """Pause the countdown without resetting progress."""
         self.is_running = False
         self.timer.stop()
         self.start_button.setText("Resume")
         self._set_tomato_sprite("neutral")
-        self._update_reset_state()
+        self._set_hourglass_icon("empty")
 
     def reset_timer(self):
-        """Reset timer to the slider-selected duration and re-enable controls."""
         self.timer.stop()
         self.is_running = False
         minutes = self.duration_slider.value()
@@ -351,30 +433,43 @@ class PomodoroWindow(QWidget):
         self.duration_slider.setEnabled(True)
         self._update_time_display()
         self._set_tomato_sprite("neutral")
-        self._update_reset_state()
+        self._set_hourglass_icon("empty")
 
     def _tick(self):
-        """Advance countdown; when finished, show alert and notify pet."""
         if self.remaining_seconds <= 0:
-            self.timer.stop()
-            self.is_running = False
-            self.start_button.setText("Start")
-            self.duration_slider.setEnabled(True)
-            self.time_label.setText("DONE!")
-            self._set_tomato_sprite("vibrate")
-            self._update_reset_state()
-            self._show_alert_dialog()
-            self._nudge_pet_wag()
-            self.pomodoro_finished.emit()
+            self._handle_timer_completion()
             return
         self.remaining_seconds = max(0, self.remaining_seconds - 1)
         self._update_time_display()
+        if self.remaining_seconds <= 0:
+            self._handle_timer_completion()
+            return
+        self._animate_running_assets()
 
     def _update_time_display(self):
-        """Render remaining time as MM:SS."""
         minutes = self.remaining_seconds // 60
         seconds = self.remaining_seconds % 60
         self.time_label.setText(f"{minutes:02d}:{seconds:02d}")
+
+    def _animate_running_assets(self):
+        self.tomato_frame_index ^= 1
+        self.hourglass_top_frame = not self.hourglass_top_frame
+        self._set_tomato_sprite("ticking", self.tomato_frame_index)
+        self._set_hourglass_icon("half_top" if self.hourglass_top_frame else "half_bottom")
+
+    def _handle_timer_completion(self):
+        self.timer.stop()
+        self.is_running = False
+        self.start_button.setText("Start")
+        self.duration_slider.setEnabled(True)
+        self.time_label.setText("DONE!")
+        self._set_tomato_sprite("vibrate")
+        self._set_hourglass_icon("empty")
+        self._notify_time_up()
+
+    def _notify_time_up(self):
+        if self.tray_icon and self.tray_icon.isSystemTrayAvailable():
+            self.tray_icon.showMessage("Pomodoro", "Time is up!", self.tray_icon.icon(), 5000)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -390,37 +485,3 @@ class PomodoroWindow(QWidget):
     def closeEvent(self, event):
         self.hide()
         event.ignore()
-
-    def _show_alert_dialog(self):
-        """Pop up a modal alert when the timer completes."""
-        if self.alert_dialog:
-            self.alert_dialog.raise_()
-            self.alert_dialog.activateWindow()
-            return
-        self.alert_dialog = QDialog(self)
-        self.alert_dialog.setWindowTitle("Time's up!")
-        self.alert_dialog.setModal(True)
-        layout = QVBoxLayout(self.alert_dialog)
-        layout.setContentsMargins(16, 16, 16, 16)
-        msg = QLabel("Pomodoro complete. Take a break or start another round.")
-        msg.setWordWrap(True)
-        layout.addWidget(msg)
-        ok_btn = QPushButton("OK")
-        ok_btn.clicked.connect(self._dismiss_alert)
-        layout.addWidget(ok_btn)
-        self.awaiting_ack = True
-        self.alert_dialog.finished.connect(self._dismiss_alert)
-        self.alert_dialog.show()
-
-    def _dismiss_alert(self):
-        """Close the alert dialog and clear state."""
-        self.awaiting_ack = False
-        if self.alert_dialog:
-            self.alert_dialog.deleteLater()
-            self.alert_dialog = None
-
-    def _nudge_pet_wag(self):
-        """Ask parent pet to wag if available; safe no-op otherwise."""
-        parent = cast(Optional["DesktopPet"], self.parent())
-        if parent and hasattr(parent, "initiate_wagging"):
-            parent.initiate_wagging()

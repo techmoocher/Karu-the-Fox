@@ -5,20 +5,19 @@ Main component
 import json
 from random import choice, random, randint
 from datetime import datetime
-
-from PySide6.QtWidgets import (QApplication, QWidget, QLabel, QVBoxLayout, QDialog,
-                               QPushButton, QMenu, QSystemTrayIcon, QStyle)
+from PySide6.QtWidgets import (QApplication, QWidget, QLabel, QVBoxLayout,
+                               QDialog, QPushButton, QMenu, QSystemTrayIcon,
+                               QStyle)
 from PySide6.QtGui import QPixmap, QMovie, QAction, QIcon, QCursor
 from PySide6.QtCore import Qt, QTimer, QUrl, QPoint
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
-# Import your custom classes from their new files
 from .music_player import MusicPlayerWindow
 from .onboarding import SpeechBubble, RatingDialog
 from .chat import ChatWindow
 from .pomodoro import PomodoroWindow
-from .constants import (BASE_DIR, IMAGE_DIR, CONFIG_FILE, ENV_FILE, 
-                        LOGO_ICON)
+from .constants import (BASE_DIR, IMAGE_DIR, CONFIG_FILE,
+                        ENV_FILE, LOGO_ICON)
 
 
 class DesktopPet(QWidget):
@@ -106,12 +105,6 @@ class DesktopPet(QWidget):
         ### Chat Window Initialization ###
         self.chat_window = ChatWindow()
 
-        ### Pomodoro Timer Initialization ###
-        self.pomodoro_window = PomodoroWindow(self)
-        # When pomodoro completes, trigger a wag to acknowledge
-        if hasattr(self.pomodoro_window, "pomodoro_finished"):
-            self.pomodoro_window.pomodoro_finished.connect(self.initiate_wagging)
-
         ### Music Player Initialization ###
         self.config = self._load_or_create_config()
         self._initialize_music_player()
@@ -119,11 +112,12 @@ class DesktopPet(QWidget):
 
         ### Initialization
         self.setup_tray_icon()
+        self.pomodoro_window = PomodoroWindow(tray_icon=self.tray_icon)
         self.start_intro_sequence()
         self.show()
         
         app = QApplication.instance()
-        if app is not None:
+        if app:
             app.aboutToQuit.connect(self.save_config)
 
     def _initialize_music_player(self):
@@ -144,13 +138,20 @@ class DesktopPet(QWidget):
         if not self.music_player_window or not self.media_player:
             return
         
-        config_data = {
+        config_data = {}
+        try:
+            with open(CONFIG_FILE, 'r') as f:
+                config_data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError, IOError):
+            config_data = {}
+
+        config_data.update({
             "last_track_index": self.music_player_window.current_index,
             "volume": self.music_player_window.volume_slider.value(),
             "is_muted": self.media_player.audioOutput().isMuted(),
             "playback_mode": self.music_player_window.playback_mode
-        }
-        
+        })
+
         try:
             with open(CONFIG_FILE, 'w') as f:
                 json.dump(config_data, f, indent=4)
@@ -260,10 +261,19 @@ class DesktopPet(QWidget):
         tray_menu.addAction(self.toggle_action)
         tray_menu.addSeparator()
         exit_action = QAction("Exit", self)
-        exit_action.triggered.connect(QApplication.quit)
+        exit_action.triggered.connect(self.exit_application)
         tray_menu.addAction(exit_action)
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
+
+    def exit_application(self):
+        """
+        Save state and quit the app from the tray menu.
+        """
+        self.save_config()
+        app = QApplication.instance()
+        if app:
+            app.quit()
 
     def open_chat_window(self):
         """
