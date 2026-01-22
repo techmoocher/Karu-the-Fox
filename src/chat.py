@@ -2,10 +2,10 @@ import os
 import json
 from PySide6.QtWidgets import (QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxLayout,
                                QFrame, QTextEdit, QLineEdit)
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QFontDatabase
 from PySide6.QtCore import Qt, QPoint, QUrl
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
-from .constants import IMAGE_DIR, LOGO_ICON
+from .constants import IMAGE_DIR, LOGO_ICON, NERD_FONT_SYMBOLS
 
 
 class ChatWindow(QWidget):
@@ -27,15 +27,16 @@ class ChatWindow(QWidget):
         self.api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key={self.api_key}"
         
         self.system_instruction = (
-            "You are a fox named Karu, a desktop pet living on the user's screen. "
+            "You are a cute and friendly fox named Karu, a desktop pet living on the user's screen. "
             "You are supportive user's best friend and always ready to help. "
             "Reply concisely with a slightly sassy, clever, and cute fox personality. "
-            "Occasionally use words like '*Yip*', '*Flickers ear*', 'Hmph', '*chuffs*'. "
-            "Never say you are an AI model or a language model. You are a fox."
+            "Occasionally use words like '*Yip*', '*Flickers ear*', 'Hmph', '*Chuffs*', '*Purr*. "
+            "Never say you are an AI model or a language model. You are a fox named Karu."
         )
 
         self._setup_ui()
         self._apply_stylesheet()
+        self._load_icon_font()
         self._connect_signals()
         
         if not self.api_key:
@@ -60,7 +61,9 @@ class ChatWindow(QWidget):
         title_bar_layout.setContentsMargins(10, 0, 0, 0)
         title_bar_layout.setSpacing(10)
         title_label = QLabel("Chat with Karu")
-        title_label.setStyleSheet("font-weight: bold; color: #ffa01e;")
+        title_label.setStyleSheet(
+            "font-weight: bold; color: #2b1b00; letter-spacing: 0.5px;"
+        )
         self.minimize_button = QPushButton("—")
         self.minimize_button.setFixedSize(30, 30)
         self.minimize_button.setObjectName("WindowButton")
@@ -99,57 +102,82 @@ class ChatWindow(QWidget):
     def _apply_stylesheet(self):
         self.setStyleSheet("""
             #CentralFrame {
-                background-color: #282c34;
-                color: #abb2bf;
-                font-family: Arial, sans-serif;
-                border-radius: 15px;
+                background-color: #fff4e6;
+                color: #2b1b00;
+                font-family: "Press Start 2P", "VT323", "Courier New", monospace;
+                font-size: 12px;
+                letter-spacing: 0.4px;
+                border: 3px solid #f7b267;
+                border-radius: 10px;
+                padding: 4px;
             }
             #TitleBar {
-                background-color: #21252b;
-                border-top-left-radius: 15px;
-                border-top-right-radius: 15px;
-                min-height: 30px;
+                background-color: #ffc387;
+                border-top-left-radius: 8px;
+                border-top-right-radius: 8px;
+                border-bottom: 3px solid #f7a440;
+                min-height: 34px;
             }
             #WindowButton {
-                font-size: 14px;
+                font-size: 12px;
                 font-weight: bold;
-                border: none;
-                background: transparent;
+                border: 2px solid #2b1b00;
+                background-color: #ffe0b8;
+                color: #2b1b00;
+                border-radius: 4px;
+                min-width: 28px;
             }
             #WindowButton:hover {
-                background-color: #353b45;
+                background-color: #ffd18a;
             }
             #ChatDisplay {
-                background-color: #21252b;
-                border: none;
-                color: #abb2bf;
-                font-size: 14px;
+                background-color: #fff0e0;
+                border: 2px solid #f7a440;
+                color: #2b1b00;
+                font-size: 12px;
+                selection-background-color: #ffb570;
+                selection-color: #2b1b00;
                 padding: 10px;
             }
             #InputBox {
-                background-color: #353b45;
-                border: 1px solid #21252b;
-                border-radius: 15px;
+                background-color: #ffe9d6;
+                border: 2px solid #f7a440;
+                border-radius: 6px;
                 padding: 8px 12px;
-                color: #ffffff;
-                font-size: 14px;
+                color: #2b1b00;
+                font-size: 12px;
+            }
+            #InputBox:focus {
+                border-color: #ffb570;
             }
             #SendButton {
-                background-color: #61afef;
-                color: #282c34;
+                background-color: #ffb570;
+                color: #2b1b00;
                 font-weight: bold;
-                border: none;
-                border-radius: 15px;
-                padding: 8px 15px;
+                border: 2px solid #2b1b00;
+                border-radius: 6px;
+                padding: 10px 14px;
             }
             #SendButton:hover {
-                background-color: #82c0ff;
+                background-color: #ffc387;
             }
             #SendButton:disabled {
-                background-color: #353b45;
-                color: #9ab;
+                background-color: #e6d3bd;
+                color: #7a6040;
+                border-color: #c8a273;
             }
         """)
+
+    def _load_icon_font(self):
+        """Load Nerd Font symbols for inline icons; fall back silently if missing."""
+        self.icon_font_family = "Symbols Nerd Font"
+        if not NERD_FONT_SYMBOLS.exists():
+            return
+        font_id = QFontDatabase.addApplicationFont(str(NERD_FONT_SYMBOLS))
+        if font_id != -1:
+            families = QFontDatabase.applicationFontFamilies(font_id)
+            if families:
+                self.icon_font_family = families[0]
     
     def _connect_signals(self):
         self.minimize_button.clicked.connect(self.showMinimized)
@@ -184,7 +212,7 @@ class ChatWindow(QWidget):
     def _call_gemini_api(self):
         self.send_button.setDisabled(True)
         self.input_box.setDisabled(True)
-        self.chat_display.append("<i style='color:#ffffff'>Karu is thinking...</i>")
+        self.chat_display.append("<i style='color:#7A6040'>Karu is thinking...</i>")
 
         # Format chat history for API
         api_history = []
@@ -254,13 +282,34 @@ class ChatWindow(QWidget):
     def _append_message(self, sender, text):
         text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
+        icon_user = (
+            f"<span style=\"font-family: '{self.icon_font_family}'; font-size: 14px;\"></span> You"
+        )
+        icon_karu = (
+            f"<span style=\"font-family: '{self.icon_font_family}'; font-size: 14px;\"></span> Karu"
+        )
+        label = icon_karu if sender == "Karu" else icon_user if sender == "You" else sender
+
         if sender == "You":
-            html = f"<p style='text-align: right; margin: 2px 5px; padding: 8px; background-color: #73e6ff; color: #000000; border-radius: 10px;'><b>{sender}:</b><br>{text}</p>"
+            html = (
+                "<p style='text-align: left; margin: 4px 5px; padding: 10px; "
+                "background-color: #ffd6a5; color: #2b1b00; border: 2px solid #2b1b00; "
+                "border-radius: 8px; box-shadow: 2px 2px 0 #d38c52;'>"
+                f"<b>{label}:</b><br>{text}</p>"
+            )
         elif sender == "Karu":
-            html = f"<p style='text-align: left; margin: 2px 5px; padding: 8px; background-color: #f5871c; color: #000000; border-radius: 10px;'><b>{sender}:</b><br>{text}</p>"
-            #html = f"<p style='text-align: left; margin: 2px 5px; padding: 8px; background-color: #73e6ff; color: #ff731b; border-radius: 10px;'><b>{sender}:</b><br>{text}</p>"
+            html = (
+                "<p style='text-align: left; margin: 4px 5px; padding: 10px; "
+                "background-color: #ffb570; color: #2b1b00; border: 2px solid #2b1b00; "
+                "border-radius: 8px; box-shadow: 2px 2px 0 #d38c52;'>"
+                f"<b>{label}:</b><br>{text}</p>"
+            )
         else:
-            html = f"<p style='color: #e06c75; margin: 2px 5px; padding: 8px; background-color: #353b45; border-radius: 10px;'><b>{sender}:</b><br>{text}</p>"
+            html = (
+                "<p style='color: #4e1a0c; margin: 4px 5px; padding: 10px; background-color: #ffdeda; "
+                "border: 2px solid #d16f4f; border-radius: 8px; box-shadow: 2px 2px 0 #c15a3a;'>"
+                f"<b>{label}:</b><br>{text}</p>"
+            )
         
         self.chat_display.append(html)
         

@@ -70,8 +70,8 @@ It's highly recommended to use a virtual environment.
 * **For Windows:**
 
     ```bash
-    python -m venv venv
-    venv\Scripts\activate
+    python -m venv .venv
+    .venv\Scripts\activate
     pip install -r requirements.txt
     ```
 
@@ -79,7 +79,7 @@ It's highly recommended to use a virtual environment.
 
     ```bash
     python3 -m venv .venv
-    source venv/bin/activate
+    source .venv/bin/activate
     pip install -r requirements.txt
     ```
 
@@ -166,16 +166,24 @@ Karu-the-Fox/
 ├── requirements.txt    # Python dependencies
 │
 ├── assets/
-│   ├── images/         # All app icons and fox animations
-│   └── music/          # Folder for your music (see setup)
+│   ├── fonts/          # Bundled fonts (NerdFontSymbolsOnly for chat icons)
+│   ├── images/         # App icons, fox sprites, UI art
+│   │   ├── control-buttons/
+│   │   ├── fox/
+│   │   ├── hydration-exercises/
+│   │   └── pomodoro/
+│   ├── music/          # Folder for your music (see setup)
+│   └── sounds/         # SFX for interactions
 │
+├── previews/           # Preview images and thumbnails
 └── src/                # All application source code
     ├── __init__.py
     ├── chat.py         # Chat window UI and API logic
     ├── constants.py    # Manages all file paths
     ├── desktop_pet.py  # The core DesktopPet class and logic
     ├── music_player.py # The music player UI and logic
-    └── onboarding.py   # Speech bubble and dialog classes
+    ├── onboarding.py   # Speech bubble and dialog classes
+    └── pomodoro.py     # Pomodoro timer UI and logic
 ```
 
 ---
