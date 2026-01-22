@@ -8,7 +8,9 @@ from datetime import datetime
 from PySide6.QtWidgets import (QApplication, QWidget, QLabel, QVBoxLayout,
                                QDialog, QPushButton, QMenu, QSystemTrayIcon,
                                QStyle)
-from PySide6.QtGui import QPixmap, QMovie, QAction, QIcon, QCursor
+from PySide6.QtGui import (QPixmap, QMovie,
+                           QAction, QIcon,
+                           QFont, QCursor)
 from PySide6.QtCore import Qt, QTimer, QUrl, QPoint
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
@@ -128,8 +130,13 @@ class DesktopPet(QWidget):
             'next': QAction("Next"),
             'loop': QAction("Mode: Loop All"),
             'mute': QAction("Mute"),
-            'open': QAction("Open Player")
+            'open': QAction("Open Music Player")
         }
+
+        bold_font = QFont()
+        bold_font.setBold(True)
+        self.tray_actions['open'].setFont(bold_font)
+
         self.media_player = QMediaPlayer()
         self._audio_output = QAudioOutput()
         self.media_player.setAudioOutput(self._audio_output)
@@ -225,7 +232,7 @@ class DesktopPet(QWidget):
     def setup_tray_icon(self):
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon(str(LOGO_ICON)))
-        self.tray_icon.setToolTip("Your Pet")
+        self.tray_icon.setToolTip("Karu the Fox")
         
         tray_menu = QMenu()
         
@@ -246,14 +253,14 @@ class DesktopPet(QWidget):
         self.tray_actions['mute'].triggered.connect(self.music_player_window.toggle_mute)
         self.tray_actions['open'].triggered.connect(self.open_music_player)
 
+        self.music_menu.addAction(self.tray_actions['open'])
+        self.music_menu.addSeparator()
         self.music_menu.addAction(self.tray_actions['play_pause'])
         self.music_menu.addAction(self.tray_actions['prev'])
         self.music_menu.addAction(self.tray_actions['next'])
         self.music_menu.addSeparator()
         self.music_menu.addAction(self.tray_actions['loop'])
         self.music_menu.addAction(self.tray_actions['mute'])
-        self.music_menu.addSeparator()
-        self.music_menu.addAction(self.tray_actions['open'])
         
         tray_menu.addMenu(self.music_menu)
 
