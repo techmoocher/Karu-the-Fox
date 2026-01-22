@@ -16,8 +16,9 @@ from .music_player import MusicPlayerWindow
 from .onboarding import SpeechBubble, RatingDialog
 from .chat import ChatWindow
 from .pomodoro import PomodoroWindow
-from .constants import (BASE_DIR, IMAGE_DIR, CONFIG_FILE,
-                        ENV_FILE, LOGO_ICON)
+from .constants import (BASE_DIR, IMAGE_DIR,
+                        CONFIG_FILE, ENV_FILE,
+                        LOGO_ICON)
 
 
 class DesktopPet(QWidget):

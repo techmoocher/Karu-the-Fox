@@ -23,7 +23,7 @@ Karu is a clever and friendly virtual desktop pet . Built with Python and PySide
 ## ✨ Features
 
 * **Interactive AI Chat:** Have a real conversation with Karu, powered by the Google Gemini API. Karu has a unique, supportive, and slightly sassy personality.
-* **Built-in Music Player:** A sleek, self-contained music player that scans your local `music/` folder and remembers your volume and song settings.
+* **Built-in Music Player:** A sleek, self-contained music player that scans your local `assets/music/` folder and remembers your volume and song settings.
 * **Dynamic Onboarding:** On first launch, Karu greets you and asks about your day with a simple mood survey.
 * **Desktop Animations:** Karu doesn't just sit there—it walks, sleeps, pauses, and reacts to being dragged around.
 * **System Tray Menu:** A right-click system tray icon gives you quick access to all of Karu's features, including the chat, music player, and exit button.
@@ -109,10 +109,10 @@ This project uses the Gemini API, which requires a secret key.
 
 ### 5. (Optional) Add Your Music
 
-The music player scans the `music/` folder. For the app to find your songs, you must follow a specific folder structure:
+The music player scans the `assets/music/` folder. For the app to find your songs, you must follow a specific folder structure:
 
 ```
-music/
+assets/music/
 │
 ├── My-Favorite-Song/
 │    ├── My-Favorite-Song_Author-Name.mp3
@@ -126,7 +126,7 @@ music/
 ***Example:***
 
 ```
-music/
+assets/music/
 │
 ├── Interstellar-Main-Theme/
 │    ├── Interstellar-Main-Theme_Hans-Zimmer.mp3
@@ -165,8 +165,9 @@ Karu-the-Fox/
 ├── main.py             # The main entry point for the app
 ├── requirements.txt    # Python dependencies
 │
-├── images/             # All app icons and fox animations
-├── music/              # Folder for your music (see setup)
+├── assets/
+│   ├── images/         # All app icons and fox animations
+│   └── music/          # Folder for your music (see setup)
 │
 └── src/                # All application source code
     ├── __init__.py

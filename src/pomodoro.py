@@ -1,21 +1,12 @@
-import sys
-import json
-from pathlib import Path
 from PySide6.QtWidgets import (
     QWidget, QLabel, QVBoxLayout,
     QHBoxLayout, QPushButton, QSlider,
-    QComboBox, QFrame, QSystemTrayIcon,
+    QComboBox, QFrame, QSystemTrayIcon, QDialog,
 )
-from PySide6.QtCore import Qt, QTimer, QPoint
+from PySide6.QtCore import Qt, QTimer, QPoint, QUrl
 from PySide6.QtGui import QPixmap, QIcon
-
-try:
-    from .constants import IMAGE_DIR, LOGO_ICON, CONFIG_FILE
-except ImportError:  # Allow running standalone
-    SRC_DIR = Path(__file__).resolve().parent
-    if str(SRC_DIR.parent) not in sys.path:
-        sys.path.append(str(SRC_DIR.parent))
-    from constants import IMAGE_DIR, LOGO_ICON, CONFIG_FILE
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+from .constants import IMAGE_DIR, LOGO_ICON, MUSIC_DIR
 
 
 class PomodoroWindow(QWidget):
@@ -81,26 +72,35 @@ class PomodoroWindow(QWidget):
         self.drag_pos = QPoint()
 
         self.tomato_frame_index = 0
-        self.hourglass_top_frame = True
 
         self.total_seconds = 25 * 60
         self.remaining_seconds = self.total_seconds
         self.is_running = False
+        self.alert_dialog = None
+        self.fox_icons = self._load_fox_icons()
+        self.fox_icon_frame_top = True
 
         self.timer = QTimer(self)
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self._tick)
 
         self.tomato_sprites = self._load_tomato_sprites()
-        self.hourglass_icons = self._load_hourglass_icons()
         self.tray_icon = tray_icon if tray_icon is not None else self._init_tray_icon()
 
+        self.alert_player = QMediaPlayer(self)
+        self.alert_audio = QAudioOutput(self)
+        self.alert_player.setAudioOutput(self.alert_audio)
+        try:
+            self.alert_player.setLoops(QMediaPlayer.Loops.Infinite)
+        except Exception:
+            pass
+
         self._setup_ui()
-        self.config = self._load_config()
-        self._apply_persisted_preferences()
+        self._apply_theme("Pastel Orange")
         self._update_time_display()
         self._set_tomato_sprite("neutral")
-        self._set_hourglass_icon("empty")
+        self._set_fox_icon("empty")
+        self._update_reset_state()
 
     def _setup_ui(self):
         self.frame = QFrame(self)
@@ -113,11 +113,13 @@ class PomodoroWindow(QWidget):
         self.title_label = QLabel("POMODORO")
         self.title_label.setObjectName("Title")
         title_row.addWidget(self.title_label)
-        title_row.addStretch()
+        title_row.addSpacing(6)
 
-        self.icon_label = QLabel()
-        self.icon_label.setFixedSize(28, 28)
-        title_row.addWidget(self.icon_label)
+        self.fox_icon_label = QLabel()
+        self.fox_icon_label.setFixedSize(40, 40)
+        self.fox_icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_row.addWidget(self.fox_icon_label)
+        title_row.addStretch()
 
         self.theme_box = QComboBox()
         self.theme_box.addItems(list(self.THEMES.keys()))
@@ -177,54 +179,40 @@ class PomodoroWindow(QWidget):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.addWidget(self.frame)
 
-    def _load_config(self):
-        defaults = {"pomodoro_duration": 25, "pomodoro_theme": "Pastel Orange"}
-        try:
-            with open(CONFIG_FILE, "r") as f:
-                data = json.load(f)
-            defaults.update({
-                "pomodoro_duration": data.get("pomodoro_duration", defaults["pomodoro_duration"]),
-                "pomodoro_theme": data.get("pomodoro_theme", defaults["pomodoro_theme"]),
-            })
-        except (FileNotFoundError, json.JSONDecodeError, IOError):
-            pass
-        return defaults
+    def _update_reset_state(self):
+        """Enable reset only after a run has started and the timer is not running."""
+        can_reset = (not self.is_running) and (
+            self.remaining_seconds < self.total_seconds or self.remaining_seconds == 0
+        )
+        self.reset_button.setEnabled(can_reset)
 
-    def _persist_config(self):
-        try:
-            with open(CONFIG_FILE, "r") as f:
-                data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError, IOError):
-            data = {}
+    def set_preferences(self, *, duration_minutes: int, theme: str):
+        """Apply persisted pomodoro preferences (duration/theme)."""
+        minutes = max(10, min(60, int(duration_minutes or 25)))
+        theme_name = theme if theme in self.THEMES else "Pastel Orange"
 
-        data.update({
-            "pomodoro_duration": self.duration_slider.value(),
-            "pomodoro_theme": self.theme_box.currentText(),
-        })
-
-        try:
-            with open(CONFIG_FILE, "w") as f:
-                json.dump(data, f, indent=4)
-        except IOError as e:
-            print(f"Error saving pomodoro config: {e}")
-
-    def _apply_persisted_preferences(self):
-        theme = self.config.get("pomodoro_theme", "Pastel Orange")
-        if theme not in self.THEMES:
-            theme = "Pastel Orange"
-        self.theme_box.blockSignals(True)
-        self.theme_box.setCurrentText(theme)
-        self.theme_box.blockSignals(False)
-        self._apply_theme(self.theme_box.currentText())
-
-        duration = int(self.config.get("pomodoro_duration", 25))
-        duration = max(10, min(60, duration))
         self.duration_slider.blockSignals(True)
-        self.duration_slider.setValue(duration)
+        self.duration_slider.setValue(minutes)
         self.duration_slider.blockSignals(False)
-        self.total_seconds = duration * 60
-        self.remaining_seconds = self.total_seconds
-        self.duration_label.setText(f"Duration: {duration} min")
+
+        self.total_seconds = minutes * 60
+        if not self.is_running:
+            self.remaining_seconds = self.total_seconds
+            self._update_time_display()
+
+        self.theme_box.blockSignals(True)
+        self.theme_box.setCurrentText(theme_name)
+        self.theme_box.blockSignals(False)
+        self._apply_theme(theme_name)
+        self._update_reset_state()
+
+    def get_preferences(self):
+        """Return current pomodoro settings for persistence."""
+        return {
+            "duration": max(10, min(60, int(self.duration_slider.value()))),
+            "theme": self.theme_box.currentText() or "Pastel Orange",
+        }
+
 
     def _load_tomato_sprites(self):
         sprite_map = {
@@ -246,13 +234,17 @@ class PomodoroWindow(QWidget):
                 path = IMAGE_DIR / "pomodoro" / filename
                 if path.exists():
                     sprites[key] = QPixmap(str(path))
+        # Fallback: legacy single ticking sprite
+        legacy_tick = IMAGE_DIR / "pomodoro" / "tomato-ticking.png"
+        if legacy_tick.exists() and "ticking" not in sprites:
+            sprites["ticking"] = [QPixmap(str(legacy_tick)), QPixmap(str(legacy_tick))]
         return sprites
 
-    def _load_hourglass_icons(self):
+    def _load_fox_icons(self):
         icon_map = {
-            "half_top": "hourglass-half-top.svg",
-            "half_bottom": "hourglass-half-bottom.svg",
-            "empty": "hourglass-empty.svg",
+            "empty": "fox-hourglass-empty.png",
+            "half_top": "fox-hourglass-half-top.png",
+            "half_bottom": "fox-hourglass-half-bottom.png",
         }
         icons = {}
         for key, filename in icon_map.items():
@@ -260,6 +252,15 @@ class PomodoroWindow(QWidget):
             if path.exists():
                 icons[key] = QPixmap(str(path))
         return icons
+
+    def _set_fox_icon(self, key):
+        pix = self.fox_icons.get(key)
+        if pix and self.fox_icon_label:
+            self.fox_icon_label.setPixmap(
+                pix.scaled(40, 40, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.FastTransformation)
+            )
+        elif self.fox_icon_label:
+            self.fox_icon_label.clear()
 
     def _init_tray_icon(self):
         if LOGO_ICON and LOGO_ICON.exists():
@@ -278,19 +279,10 @@ class PomodoroWindow(QWidget):
             pix = pix[frame_index % len(pix)]
         if pix:
             self.tomato_label.setPixmap(
-                pix.scaled(64, 64, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                pix.scaled(250, 250, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.FastTransformation)
             )
         else:
             self.tomato_label.clear()
-
-    def _set_hourglass_icon(self, key):
-        pix = self.hourglass_icons.get(key)
-        if pix and self.icon_label:
-            scaled = pix.scaled(28, 28, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-            self.icon_label.setPixmap(scaled)
-            self.setWindowIcon(QIcon(scaled))
-        elif self.icon_label:
-            self.icon_label.clear()
 
     def _apply_theme(self, name):
         colors = self.THEMES.get(name, self.THEMES["Pastel Orange"])
@@ -388,8 +380,6 @@ class PomodoroWindow(QWidget):
             }}
             """
         )
-        if hasattr(self, "theme_box"):
-            self._persist_config()
 
     def _duration_changed(self, value):
         if self.is_running:
@@ -398,7 +388,7 @@ class PomodoroWindow(QWidget):
         self.remaining_seconds = self.total_seconds
         self.duration_label.setText(f"Duration: {value} min")
         self._update_time_display()
-        self._persist_config()
+        self._update_reset_state()
 
     def toggle_timer(self):
         if self.is_running:
@@ -412,16 +402,20 @@ class PomodoroWindow(QWidget):
         self.start_button.setText("Pause")
         self.duration_slider.setEnabled(False)
         self.tomato_frame_index = 0
-        self.hourglass_top_frame = True
         self._set_tomato_sprite("ticking", self.tomato_frame_index)
-        self._set_hourglass_icon("half_top")
+        self.fox_icon_frame_top = True
+        self._set_fox_icon("half_top")
+        self._update_reset_state()
+        self._stop_alert_sound()
 
     def _pause_timer(self):
         self.is_running = False
         self.timer.stop()
         self.start_button.setText("Resume")
         self._set_tomato_sprite("neutral")
-        self._set_hourglass_icon("empty")
+        self._set_fox_icon("empty")
+        self._update_reset_state()
+        self._stop_alert_sound()
 
     def reset_timer(self):
         self.timer.stop()
@@ -433,7 +427,9 @@ class PomodoroWindow(QWidget):
         self.duration_slider.setEnabled(True)
         self._update_time_display()
         self._set_tomato_sprite("neutral")
-        self._set_hourglass_icon("empty")
+        self._set_fox_icon("empty")
+        self._update_reset_state()
+        self._stop_alert_sound()
 
     def _tick(self):
         if self.remaining_seconds <= 0:
@@ -452,10 +448,15 @@ class PomodoroWindow(QWidget):
         self.time_label.setText(f"{minutes:02d}:{seconds:02d}")
 
     def _animate_running_assets(self):
+        if "ticking" not in self.tomato_sprites:
+            self._set_tomato_sprite("neutral")
+            return
         self.tomato_frame_index ^= 1
-        self.hourglass_top_frame = not self.hourglass_top_frame
         self._set_tomato_sprite("ticking", self.tomato_frame_index)
-        self._set_hourglass_icon("half_top" if self.hourglass_top_frame else "half_bottom")
+        # Toggle fox hourglass between top/bottom halves
+        if self.fox_icons:
+            self.fox_icon_frame_top = not self.fox_icon_frame_top
+            self._set_fox_icon("half_top" if self.fox_icon_frame_top else "half_bottom")
 
     def _handle_timer_completion(self):
         self.timer.stop()
@@ -464,12 +465,57 @@ class PomodoroWindow(QWidget):
         self.duration_slider.setEnabled(True)
         self.time_label.setText("DONE!")
         self._set_tomato_sprite("vibrate")
-        self._set_hourglass_icon("empty")
+        self._set_fox_icon("empty")
+        self._update_reset_state()
         self._notify_time_up()
 
     def _notify_time_up(self):
+        self._start_alert_sound()
+        self._show_alert_dialog()
         if self.tray_icon and self.tray_icon.isSystemTrayAvailable():
             self.tray_icon.showMessage("Pomodoro", "Time is up!", self.tray_icon.icon(), 5000)
+
+    def _start_alert_sound(self):
+        alert_path = MUSIC_DIR / "pomodoro-alert.mp3"
+        if not alert_path.exists():
+            return
+        try:
+            self.alert_player.setSource(QUrl.fromLocalFile(str(alert_path)))
+            self.alert_audio.setVolume(1.0)
+            self.alert_player.play()
+        except Exception:
+            pass
+
+    def _stop_alert_sound(self):
+        try:
+            self.alert_player.stop()
+        except Exception:
+            pass
+
+    def _show_alert_dialog(self):
+        if self.alert_dialog:
+            self.alert_dialog.raise_()
+            self.alert_dialog.activateWindow()
+            return
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Time's up!")
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(16, 16, 16, 16)
+        msg = QLabel("Pomodoro complete. Take a short break or start another round.")
+        msg.setWordWrap(True)
+        layout.addWidget(msg)
+        ok_btn = QPushButton("OK")
+        ok_btn.clicked.connect(dialog.accept)
+        layout.addWidget(ok_btn)
+        dialog.finished.connect(self._clear_alert_dialog)
+        self.alert_dialog = dialog
+        dialog.show()
+
+    def _clear_alert_dialog(self):
+        if self.alert_dialog:
+            self.alert_dialog.deleteLater()
+        self.alert_dialog = None
+        self._stop_alert_sound()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
