@@ -236,7 +236,7 @@ class DesktopPet(QWidget):
         
         tray_menu = QMenu()
         
-        self.music_menu = QMenu("Music")
+        self.music_menu = QMenu("Music with Karu")
 
         chat_action = QAction("Chat with Karu", self)
         chat_action.triggered.connect(self.open_chat_window)

@@ -67,7 +67,7 @@ class ChatWindow(QWidget):
         title_bar_layout.setSpacing(10)
         title_label = QLabel("Chat with Karu")
         title_label.setStyleSheet(
-            "font-weight: bold; color: #2b1b00; letter-spacing: 0.5px;"
+            "font-weight: bold; color: #2B1B00; letter-spacing: 0.5px;"
         )
         self.minimize_button = QPushButton("—")
         self.minimize_button.setFixedSize(30, 30)
@@ -106,69 +106,69 @@ class ChatWindow(QWidget):
     def _apply_stylesheet(self):
         self.setStyleSheet("""
             #CentralFrame {
-                background-color: #fff4e6;
-                color: #2b1b00;
+                background-color: #FFF4E6;
+                color: #2B1B00;
                 font-family: "Press Start 2P", "VT323", "Courier New", monospace;
                 font-size: 12px;
                 letter-spacing: 0.4px;
-                border: 3px solid #f7b267;
+                border: 3px solid #F7B267;
                 border-radius: 10px;
                 padding: 4px;
             }
             #TitleBar {
-                background-color: #ffc387;
+                background-color: #FFC387;
                 border-top-left-radius: 8px;
                 border-top-right-radius: 8px;
-                border-bottom: 3px solid #f7a440;
+                border-bottom: 3px solid #F7A440;
                 min-height: 34px;
             }
             #WindowButton {
                 font-size: 12px;
                 font-weight: bold;
-                border: 2px solid #2b1b00;
-                background-color: #ffe0b8;
-                color: #2b1b00;
+                border: 2px solid #2B1B00;
+                background-color: #FFE0B8;
+                color: #2B1B00;
                 border-radius: 4px;
                 min-width: 28px;
             }
             #WindowButton:hover {
-                background-color: #ffd18a;
+                background-color: #FFD18A;
             }
             #ChatDisplay {
-                background-color: #fff0e0;
-                border: 2px solid #f7a440;
-                color: #2b1b00;
+                background-color: #FFF0E0;
+                border: 2px solid #F7A440;
+                color: #2B1B00;
                 font-size: 12px;
-                selection-background-color: #ffb570;
-                selection-color: #2b1b00;
+                selection-background-color: #FFB570;
+                selection-color: #2B1B00;
                 padding: 10px;
             }
             #InputBox {
-                background-color: #ffe9d6;
-                border: 2px solid #f7a440;
+                background-color: #FFE9D6;
+                border: 2px solid #F7A440;
                 border-radius: 6px;
                 padding: 8px 12px;
-                color: #2b1b00;
+                color: #2B1B00;
                 font-size: 12px;
             }
             #InputBox:focus {
-                border-color: #ffb570;
+                border-color: #FFB570;
             }
             #SendButton {
-                background-color: #ffb570;
-                color: #2b1b00;
+                background-color: #FFB570;
+                color: #2B1B00;
                 font-weight: bold;
-                border: 2px solid #2b1b00;
+                border: 2px solid #2B1B00;
                 border-radius: 6px;
                 padding: 10px 14px;
             }
             #SendButton:hover {
-                background-color: #ffc387;
+                background-color: #FFC387;
             }
             #SendButton:disabled {
-                background-color: #e6d3bd;
-                color: #7a6040;
-                border-color: #c8a273;
+                background-color: #E6D3BD;
+                color: #7A6040;
+                border-color: #C8A273;
             }
         """)
 
@@ -296,21 +296,21 @@ class ChatWindow(QWidget):
         if sender == "You":
             html = (
                 "<p style='text-align: left; margin: 4px 5px; padding: 10px; "
-                "background-color: #ffd6a5; color: #2b1b00; border: 2px solid #2b1b00; "
-                "border-radius: 8px; box-shadow: 2px 2px 0 #d38c52;'>"
+                "background-color: #FFD6A5; color: #2B1B00; border: 2px solid #2B1B00; "
+                "border-radius: 8px;'>"
                 f"<b>{label}:</b><br>{text}</p>"
             )
         elif sender == "Karu":
             html = (
                 "<p style='text-align: left; margin: 4px 5px; padding: 10px; "
-                "background-color: #ffb570; color: #2b1b00; border: 2px solid #2b1b00; "
-                "border-radius: 8px; box-shadow: 2px 2px 0 #d38c52;'>"
+                "background-color: #FFB570; color: #2B1B00; border: 2px solid #2B1B00; "
+                "border-radius: 8px;'>"
                 f"<b>{label}:</b><br>{text}</p>"
             )
         else:
             html = (
-                "<p style='color: #4e1a0c; margin: 4px 5px; padding: 10px; background-color: #ffdeda; "
-                "border: 2px solid #d16f4f; border-radius: 8px; box-shadow: 2px 2px 0 #c15a3a;'>"
+                "<p style='color: #4E1A0C; margin: 4px 5px; padding: 10px; background-color: #FFDEDA; "
+                "border: 2px solid #D16F4F; border-radius: 8px;'>"
                 f"<b>{label}:</b><br>{text}</p>"
             )
         

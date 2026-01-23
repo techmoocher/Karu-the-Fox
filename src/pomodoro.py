@@ -23,10 +23,10 @@ class PomodoroWindow(QWidget):
             "text": "#112542",
         },
         # "Soft Blue": {
-        #     "bg": "#e9f4ff",
-        #     "panel": "#d6eaff",
-        #     "accent": "#6ea8ff",
-        #     "text": "#0d233f",
+        #     "bg": "#E9F4FF",
+        #     "panel": "#D6EAFF",
+        #     "accent": "#6EA8FF",
+        #     "text": "#0D233F",
         # },
         "Pastel Pink": {
             "bg": "#FFE4EF",
@@ -35,10 +35,10 @@ class PomodoroWindow(QWidget):
             "text": "#3F0D21",
         },
         # "Soft Pink": {
-        #     "bg": "#ffe8f2",
-        #     "panel": "#ffd8ea",
-        #     "accent": "#ff9ac3",
-        #     "text": "#3c1226",
+        #     "bg": "#FFE8F2",
+        #     "panel": "#FFD8EA",
+        #     "accent": "#FF9AC3",
+        #     "text": "#3C1226",
         # },
         "Pastel Orange": {
             "bg": "#FFF0DC",
@@ -47,10 +47,10 @@ class PomodoroWindow(QWidget):
             "text": "#3D1F0F",
         },
         # "Soft Orange": {
-        #     "bg": "#fff3e3",
-        #     "panel": "#ffe6cc",
-        #     "accent": "#ffae60",
-        #     "text": "#3a2313",
+        #     "bg": "#FFF3E3",
+        #     "panel": "#FFE6CC",
+        #     "accent": "#FFAE60",
+        #     "text": "#3A2313",
         # },
         "Pastel Red": {
             "bg": "#FFE1E1",
@@ -59,10 +59,10 @@ class PomodoroWindow(QWidget):
             "text": "#3D0F0F",
         },
         # "Soft Red": {
-        #     "bg": "#ffe8e8",
-        #     "panel": "#ffd3d3",
-        #     "accent": "#ff8a8a",
-        #     "text": "#3a1010",
+        #     "bg": "#FFE8E8",
+        #     "panel": "#FFD3D3",
+        #     "accent": "#FF8A8A",
+        #     "text": "#3A1010",
         # },
     }
 

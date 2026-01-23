@@ -40,7 +40,7 @@ class MusicPlayerWindow(QWidget):
         ### Window Flags and Attributes ###
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-        self.setWindowTitle("Fox Music")
+        self.setWindowTitle("Music with Karu")
         self.setWindowIcon(QIcon(str(IMAGE_DIR / "logo.png")))
         self.setMinimumSize(420, 220)
 
@@ -90,9 +90,11 @@ class MusicPlayerWindow(QWidget):
         ## Time and Progress
         progress_layout = QHBoxLayout()
         self.current_time_label = QLabel("0:00")
+        self.current_time_label.setObjectName("TimeLabel")
         self.progress_slider = QSlider(Qt.Orientation.Horizontal)
         self.progress_slider.setToolTip("Seek")
         self.total_time_label = QLabel("0:00")
+        self.total_time_label.setObjectName("TimeLabel")
         progress_layout.addWidget(self.current_time_label)
         progress_layout.addWidget(self.progress_slider)
         progress_layout.addWidget(self.total_time_label)
@@ -179,7 +181,7 @@ class MusicPlayerWindow(QWidget):
         title_bar_layout.setSpacing(10)
 
         title_label = QLabel("Fox Music")
-        title_label.setStyleSheet("font-weight: bold; color: #ffa01e;")
+        title_label.setStyleSheet("font-weight: bold; color: #FFA01E;")
         
         self.minimize_button = QPushButton("—")
         self.close_button = QPushButton("✕")
@@ -197,67 +199,124 @@ class MusicPlayerWindow(QWidget):
     
     def _apply_stylesheet(self):
         self.setStyleSheet("""
+            /* Pastel pixel theme */
+            * {
+                font-family: "Press Start 2P", "VT323", "Courier New", monospace;
+                letter-spacing: 0.5px;
+            }
+
             #CentralFrame {
-                background-color: #282c34;
-                color: #abb2bf;
-                font-family: Arial, sans-serif;
-                border-radius: 15px;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #CFE8FF, stop:1 #B6DCFF);
+                color: #1F2A44;
+                border: 4px solid #1F3D66;
+                border-radius: 10px;
             }
+
             #TitleBar {
-                background-color: #21252b;
-                border-top-left-radius: 15px;
-                border-top-right-radius: 15px;
+                background: #9CD5FF;
+                border-top-left-radius: 7px;
+                border-top-right-radius: 7px;
+                border-bottom: 3px solid #1F3D66;
             }
+
             #WindowButton {
-                font-size: 14px;
-                font-weight: bold;
+                background: #7CB8F0;
+                border: 3px solid #1F3D66;
+                border-radius: 4px;
+                color: #0F1B2D;
+                font-size: 12px;
+                padding: 2px 6px;
             }
-            #WindowButton:hover {
-                background-color: #353b45;
+            #WindowButton:hover { background: #B6E2FF; }
+            #WindowButton:pressed {
+                background: #6AA7DD;
+                margin-top: 2px;
             }
+
             #TitleLabel {
-                font-size: 22px; font-weight: bold; color: #ffffff;
+                font-size: 18px;
+                font-weight: bold;
+                color: #0F1B2D;
             }
             #ArtistLabel {
-                font-size: 16px; color: #9ab;
+                font-size: 12px;
+                color: #294368;
             }
             #Thumbnail {
-                border: 1px solid #353b45; border-radius: 10px; background-color: #21252b;
+                border: 3px solid #1F3D66;
+                border-radius: 6px;
+                background: #E5F3FF;
             }
-            
-            #ControlButton, #PlaylistButton {
-                background-color: transparent; border: none;
+
+            #ControlButton, #PlaylistButton, #PlayPauseButton {
+                background: #9CD5FF;
+                border: 3px solid #1F3D66;
+                border-radius: 6px;
+                color: #0F1B2D;
+                padding: 6px 10px;
             }
-            #ControlButton:hover, #PlaylistButton:hover {
-                background-color: #353b45;
-            }
-            #ControlButton:pressed, #PlaylistButton:pressed {
-                background-color: #21252b;
+            #ControlButton:hover, #PlaylistButton:hover, #PlayPauseButton:hover { background: #BFE6FF; }
+            #ControlButton:pressed, #PlaylistButton:pressed, #PlayPauseButton:pressed {
+                background: #7CB8F0;
+                margin-top: 2px;
             }
             #PlayPauseButton {
-                border-radius: 32px; background-color: #353b45;
+                min-width: 70px;
+                min-height: 70px;
+                border-radius: 10px;
+                background: #8BC7FF;
             }
-            #PlayPauseButton:hover {
-                background-color: #414855;
-            }
-            #PlayPauseButton:pressed {
-                background-color: #21252b;
-            }
-            #PlaylistButton {
-                font-size: 14px; padding: 5px 15px; border: 1px solid #353b45; border-radius: 15px;
-            }
+            #PlaylistButton { font-size: 12px; padding: 8px 14px; }
+
             QSlider::groove:horizontal {
-                border: 1px solid #282c34; height: 6px; background: #353b45; margin: 2px 0; border-radius: 3px;
+                border: 3px solid #1F3D66;
+                height: 10px;
+                background: #E5F3FF;
+                margin: 4px 0;
+            }
+            QSlider::sub-page:horizontal {
+                background: #7CB8F0;
+                border: 3px solid #1F3D66;
+            }
+            QSlider::add-page:horizontal {
+                background: #CFE8FF;
+                border: 3px solid #1F3D66;
             }
             QSlider::handle:horizontal {
-                background: #61afef; border: 1px solid #61afef; width: 14px; height: 14px; margin: -4px 0; border-radius: 7px;
+                background: #1F3D66;
+                border: 2px solid #0F1B2D;
+                width: 18px;
+                height: 18px;
+                margin: -7px 0;
+                border-radius: 2px;
             }
+
             QListWidget {
-                background-color: #21252b; border: 1px solid #353b45; font-size: 14px; padding: 5px;
+                background: #E5F3FF;
+                border: 3px solid #1F3D66;
+                font-size: 12px;
+                padding: 6px;
+                color: #0F1B2D;
             }
-            QListWidget::item { padding: 8px; }
-            QListWidget::item:selected { background-color: #61afef; color: #282c34; }
-            QToolTip { background-color: #21252b; color: #abb2bf; border: 1px solid #353b45; padding: 4px; border-radius: 3px; }
+            QListWidget::item { padding: 10px 6px; }
+            QListWidget::item:selected {
+                background: #7CB8F0;
+                color: #0F1B2D;
+                border: 2px solid #1F3D66;
+            }
+
+            #TimeLabel {
+                color: #000000;
+            }
+
+            QToolTip {
+                background: #0F1B2D;
+                color: #CFE8FF;
+                border: 2px solid #7CB8F0;
+                padding: 6px;
+                font-size: 10px;
+            }
         """)
 
     def _connect_signals(self):
