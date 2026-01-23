@@ -4,18 +4,18 @@ Main component
 '''
 
 import json
+import sys
 from random import choice, random, randint
 from datetime import datetime
 from PySide6.QtWidgets import (QApplication, QWidget,
-                               QLabel, QVBoxLayout,
-                               QDialog, QMenu,
-                               QSystemTrayIcon)
+                               QLabel, QVBoxLayout, QDialog)
 from PySide6.QtGui import (QPixmap, QMovie,
-                           QAction, QIcon,
-                           QFont)
+                           QAction, QFont)
 from PySide6.QtCore import (Qt, QTimer, QUrl)
 from PySide6.QtMultimedia import (QMediaPlayer, QAudioOutput)
 
+from .tray_menu import TrayMenuManager
+from .help import HelpDialog
 from .music_player import MusicPlayerWindow
 from .onboarding import SpeechBubble, RatingDialog
 from .chat import ChatWindow
@@ -106,16 +106,30 @@ class DesktopPet(QWidget):
         self.is_dragging = False
         self.drag_start_pos = None
 
-        ### Chat Window Initialization ###
+        ### Chat & Help ###
         self.chat_window = ChatWindow()
+        self.help_dialog = HelpDialog(self)
 
         ### Music Player Initialization ###
         self.config = self._load_or_create_config()
         self._initialize_music_player()
         self._apply_config_to_player()
+        self._connect_tray_actions()
 
-        ### Initialization
-        self.setup_tray_icon()
+        ### Tray & Supporting Windows ###
+        self.tray_manager = TrayMenuManager(
+            parent=self,
+            icon_path=LOGO_ICON,
+            tray_actions=self.tray_actions,
+            open_chat=self.open_chat_window,
+            open_pomodoro=self.open_pomodoro_window,
+            toggle_visibility=self.toggle_visibility,
+            open_help=self.open_help_dialog,
+            exit_app=self.exit_application,
+        )
+        self.tray_icon = self.tray_manager.tray_icon
+        self.toggle_action = self.tray_manager.toggle_action
+
         self.pomodoro_window = PomodoroWindow(tray_icon=self.tray_icon)
         self.start_intro_sequence()
         self.show()
@@ -217,50 +231,13 @@ class DesktopPet(QWidget):
                 win.thumbnail_label.setText("No Art")
             win.song_list_widget.setCurrentRow(last_index)
 
-    def setup_tray_icon(self):
-        self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QIcon(str(LOGO_ICON)))
-        self.tray_icon.setToolTip("Karu the Fox")
-        
-        tray_menu = QMenu()
-        
-        self.music_menu = QMenu("Music with Karu")
-
-        chat_action = QAction("Chat with Karu", self)
-        chat_action.triggered.connect(self.open_chat_window)
-        tray_menu.addAction(chat_action)
-
-        pomodoro_action = QAction("Pomodoro Timer", self)
-        pomodoro_action.triggered.connect(self.open_pomodoro_window)
-        tray_menu.addAction(pomodoro_action)
-        
+    def _connect_tray_actions(self):
         self.tray_actions['play_pause'].triggered.connect(self.music_player_window.toggle_play_pause)
         self.tray_actions['prev'].triggered.connect(self.music_player_window.prev_song)
         self.tray_actions['next'].triggered.connect(self.music_player_window.next_song)
         self.tray_actions['loop'].triggered.connect(self.music_player_window.change_playback_mode)
         self.tray_actions['mute'].triggered.connect(self.music_player_window.toggle_mute)
         self.tray_actions['open'].triggered.connect(self.open_music_player)
-
-        self.music_menu.addAction(self.tray_actions['open'])
-        self.music_menu.addSeparator()
-        self.music_menu.addAction(self.tray_actions['play_pause'])
-        self.music_menu.addAction(self.tray_actions['prev'])
-        self.music_menu.addAction(self.tray_actions['next'])
-        self.music_menu.addSeparator()
-        self.music_menu.addAction(self.tray_actions['loop'])
-        self.music_menu.addAction(self.tray_actions['mute'])
-        
-        tray_menu.addMenu(self.music_menu)
-
-        self.toggle_action = QAction("Hide", self)
-        self.toggle_action.triggered.connect(self.toggle_visibility)
-        tray_menu.addAction(self.toggle_action)
-        tray_menu.addSeparator()
-        exit_action = QAction("Exit", self)
-        exit_action.triggered.connect(self.exit_application)
-        tray_menu.addAction(exit_action)
-        self.tray_icon.setContextMenu(tray_menu)
-        self.tray_icon.show()
 
     def exit_application(self):
         """
@@ -290,6 +267,11 @@ class DesktopPet(QWidget):
         self.pomodoro_window.show()
         self.pomodoro_window.activateWindow()
 
+    def open_help_dialog(self):
+        """Show a pastel help window with quick instructions."""
+        if self.help_dialog:
+            self.help_dialog.show_dialog()
+
     def start_intro_sequence(self):
         hour = datetime.now().hour
         greeting = "Good morning!" if 5 <= hour < 12 else "Good afternoon!" if 12 <= hour < 18 else "Good evening!"
@@ -298,7 +280,7 @@ class DesktopPet(QWidget):
         QTimer.singleShot(1200, self.ask_question)
 
     def start_main_lifecycle(self):
-        self.music_menu.setEnabled(True)
+        self.tray_manager.set_music_menu_enabled(True)
         if self.bubble:
             self.bubble.hide()
         self.display_check_timer.start(2000)
