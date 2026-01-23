@@ -1,3 +1,8 @@
+### CHAT WITH KARU ###
+'''
+Chat with Karu - AI-powered chat window for Karu the Fox desktop pet.
+'''
+
 import os
 import json
 from PySide6.QtWidgets import (QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxLayout,
@@ -5,7 +10,7 @@ from PySide6.QtWidgets import (QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxL
 from PySide6.QtGui import QIcon, QFontDatabase
 from PySide6.QtCore import Qt, QPoint, QUrl
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
-from .constants import IMAGE_DIR, LOGO_ICON, NERD_FONT_SYMBOLS
+from .constants import LOGO_ICON, NERD_FONT_SYMBOLS
 
 
 class ChatWindow(QWidget):

@@ -1,14 +1,15 @@
 ### MUSIC PLAYER ###
 '''
-
+Music Player - A simple music player interface for Karu the Fox desktop pet.
 '''
 from random import randint
-from PySide6.QtWidgets import (QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxLayout,
-                               QListWidget, QSlider, QStyle, QListWidgetItem,
-                               QGraphicsDropShadowEffect, QFrame)
-from PySide6.QtGui import QPixmap, QIcon, QColor
+from PySide6.QtWidgets import (QWidget, QLabel, QVBoxLayout,
+                               QPushButton, QHBoxLayout,
+                               QListWidget, QSlider, QStyle,
+                               QListWidgetItem, QFrame)
+from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtCore import Qt, QUrl, QSize, QPoint
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PySide6.QtMultimedia import QMediaPlayer
 from .constants import IMAGE_DIR, MUSIC_DIR
 
 

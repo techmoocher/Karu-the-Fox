@@ -6,8 +6,9 @@ Main component
 import json
 from random import choice, random, randint
 from datetime import datetime
-from PySide6.QtWidgets import (QApplication, QWidget, QLabel,
-                               QVBoxLayout, QDialog, QMenu,
+from PySide6.QtWidgets import (QApplication, QWidget,
+                               QLabel, QVBoxLayout,
+                               QDialog, QMenu,
                                QSystemTrayIcon)
 from PySide6.QtGui import (QPixmap, QMovie, QAction,
                            QIcon, QFont)
@@ -18,8 +19,7 @@ from .music_player import MusicPlayerWindow
 from .onboarding import SpeechBubble, RatingDialog
 from .chat import ChatWindow
 from .pomodoro import PomodoroWindow
-from .constants import (BASE_DIR, IMAGE_DIR,
-                        CONFIG_FILE, ENV_FILE,
+from .constants import (IMAGE_DIR, CONFIG_FILE,
                         LOGO_ICON)
 
 
