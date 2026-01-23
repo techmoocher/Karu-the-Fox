@@ -61,7 +61,7 @@ class MusicPlayerWindow(QWidget):
 
         self._setup_title_bar()
 
-        # Content Layout
+        ## Content Layout
         content_layout = QVBoxLayout()
         content_layout.setContentsMargins(20, 10, 20, 10)
         content_layout.setSpacing(15)
@@ -86,7 +86,7 @@ class MusicPlayerWindow(QWidget):
         info_layout.addWidget(self.thumbnail_label)
         info_layout.addLayout(title_artist_layout)
 
-        ### Time and Progress ###
+        ## Time and Progress
         progress_layout = QHBoxLayout()
         self.current_time_label = QLabel("0:00")
         self.progress_slider = QSlider(Qt.Orientation.Horizontal)
@@ -96,7 +96,7 @@ class MusicPlayerWindow(QWidget):
         progress_layout.addWidget(self.progress_slider)
         progress_layout.addWidget(self.total_time_label)
 
-        ### Control Buttons ###
+        ## Control Buttons
         # Previous Button
         controls_layout = QHBoxLayout()
         self.prev_button = QPushButton()
@@ -109,12 +109,6 @@ class MusicPlayerWindow(QWidget):
         self.play_pause_button.setIcon(self.icons['play'])
         self.play_pause_button.setFixedSize(64, 64); self.play_pause_button.setIconSize(QSize(40, 40)); self.play_pause_button.setObjectName("PlayPauseButton")
         self.play_pause_button.setToolTip("Play")
-        # Glow Effect for Play/Pause Button
-        shadow_effect = QGraphicsDropShadowEffect(self)
-        shadow_effect.setBlurRadius(20)
-        shadow_effect.setColor(QColor("#98c379"))
-        shadow_effect.setOffset(0, 0)
-        self.play_pause_button.setGraphicsEffect(shadow_effect)
 
         # Next Button
         self.next_button = QPushButton()

@@ -93,7 +93,6 @@ class ChatWindow(QWidget):
         input_layout.addWidget(self.send_button)
         self.main_layout.addLayout(input_layout)
 
-    # Helper for layout
     def setCentralWidget(self, widget):
         layout = QVBoxLayout(self)
         layout.addWidget(widget)
@@ -169,7 +168,9 @@ class ChatWindow(QWidget):
         """)
 
     def _load_icon_font(self):
-        """Load Nerd Font symbols for inline icons; fall back silently if missing."""
+        """
+        Load Nerd Font symbols for inline icons; fall back silently if missing.
+        """
         self.icon_font_family = "Symbols Nerd Font"
         if not NERD_FONT_SYMBOLS.exists():
             return
@@ -188,7 +189,6 @@ class ChatWindow(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            # Check if click is on the title bar
             if self.main_layout.itemAt(0).widget().geometry().contains(event.pos()):
                 self.drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
     
@@ -214,10 +214,8 @@ class ChatWindow(QWidget):
         self.input_box.setDisabled(True)
         self.chat_display.append("<i style='color:#7A6040'>Karu is thinking...</i>")
 
-        # Format chat history for API
         api_history = []
         for msg in self.chat_history:
-            # Ensure role is 'user' or 'model'
             if msg['role'] in ['user', 'model']:
                 api_history.append(msg)
         
