@@ -129,7 +129,7 @@ class DesktopPet(QWidget):
             'play_pause': QAction("Play"),
             'prev': QAction("Previous"),
             'next': QAction("Next"),
-            'loop': QAction("Mode: Loop All"),
+            'loop': QAction("Mode: Normal"),
             'mute': QAction("Mute"),
             'open': QAction("Open Music Player")
         }
@@ -172,7 +172,7 @@ class DesktopPet(QWidget):
             "last_track_index": -1,
             "volume": 100,
             "is_muted": False,
-            "playback_mode": "shuffle"
+            "playback_mode": "normal"
         }
 
         try:
@@ -196,23 +196,10 @@ class DesktopPet(QWidget):
         win.update_volume_icon()
         win.tray_actions['mute'].setText("Unmute" if win.is_muted else "Mute")
 
-        # Apply playback mode
-        win.playback_mode = config['playback_mode']
-        if win.playback_mode == 'loop_one':
-            win.loop_button.setText("")
-            win.loop_button.setToolTip("Loop One")
-            win.tray_actions['loop'].setText("Mode: Loop One")
-        elif win.playback_mode == 'shuffle':
-            win.loop_button.setText("")
-            win.loop_button.setToolTip("Shuffle")
-            win.tray_actions['loop'].setText("Mode: Shuffle")
-        else: 
-            win.playback_mode = 'loop_all'
-            win.loop_button.setText("")
-            win.loop_button.setToolTip("Loop All")
-            win.tray_actions['loop'].setText("Mode: Loop All")
-
-        # Apply last track
+        mode = config['playback_mode']
+        if mode == 'loop_one':
+            mode = 'normal'
+        win.apply_playback_mode(mode)
         last_index = config['last_track_index']
 
         if 0 <= last_index < len(win.playlist):

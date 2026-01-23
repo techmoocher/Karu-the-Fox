@@ -2,16 +2,17 @@
 '''
 Music Player - A simple music player interface for Karu the Fox desktop pet.
 '''
-from random import randint
 from PySide6.QtWidgets import (QWidget, QLabel, QVBoxLayout,
                                QPushButton, QHBoxLayout,
-                               QListWidget, QSlider,
-                               QListWidgetItem, QFrame)
-from PySide6.QtGui import QPixmap, QIcon, QFont, QFontDatabase
-from PySide6.QtCore import Qt, QUrl, QPoint
+                               QListWidget, QSlider, QStyle,
+                               QListWidgetItem, QFrame, QDialog, QTextBrowser)
+from PySide6.QtGui import QPixmap, QIcon
+from PySide6.QtCore import Qt, QUrl, QSize, QPoint
 from PySide6.QtMultimedia import QMediaPlayer
 from .constants import IMAGE_DIR, MUSIC_DIR
 
+
+MUSIC_PLAYER_ICON_DIR = IMAGE_DIR / "music-player"
 
 class MusicPlayerWindow(QWidget):
     def __init__(self, media_player, tray_actions, parent=None):
@@ -20,25 +21,13 @@ class MusicPlayerWindow(QWidget):
         self.tray_actions = tray_actions
         self.playlist = []
         self.current_index = -1
-        self.playback_mode = 'loop_all'
+        self.playback_mode = 'normal'
         self.is_muted = False
         self.volume = 1.0
         self.drag_pos = QPoint()
-
-        self.icon_font_family = None
-        self.glyph_available = self._load_icon_font()
-        self.glyphs = {
-            'prev': "󰒮",
-            'next': "󰒭",
-            'play': "",
-            'pause': "",
-            'loop': "",
-            'shuffle': "",
-            'vol_mute': "󰖁",
-            'vol_low': "󰕿",
-            'vol_mid': "󰖀",
-            'vol_high': "󰕾",
-        }
+        self._control_icon_size = QSize(22, 22)
+        self._play_icon_size = QSize(32, 32)
+        self._shuffle_queue = []
 
         ### Window Flags and Attributes ###
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
@@ -46,6 +35,7 @@ class MusicPlayerWindow(QWidget):
         self.setWindowTitle("Music with Karu")
         self.setWindowIcon(QIcon(str(IMAGE_DIR / "logo.png")))
         self.setMinimumSize(420, 220)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         self._setup_ui()
         self._apply_stylesheet()
@@ -106,21 +96,22 @@ class MusicPlayerWindow(QWidget):
         # Previous Button
         controls_layout = QHBoxLayout()
         self.prev_button = QPushButton()
-        self._set_button_icon(self.prev_button, 'prev', "Prev", 16)
-        self.prev_button.setFixedSize(44, 44); self.prev_button.setObjectName("ControlButton")
+        self.prev_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaSkipBackward))
+        self.prev_button.setFixedSize(48, 48); self.prev_button.setIconSize(QSize(28, 28)); self.prev_button.setObjectName("ControlButton")
         self.prev_button.setToolTip("Previous")
 
-        # Play/Pause Button (glyph-based, smaller)
+        # Play/Pause Button (text-based, smaller)
         self.play_pause_button = QPushButton()
-        self._set_button_icon(self.play_pause_button, 'play', "Play", 17)
         self.play_pause_button.setFixedSize(56, 56)
         self.play_pause_button.setObjectName("PlayPauseButton")
-        self.play_pause_button.setToolTip("Play")
+        self.play_pause_button.setToolTip("Play / Pause")
+        self.play_pause_button.setIcon(self._get_icon("play.png"))
+        self.play_pause_button.setIconSize(self._play_icon_size)
 
         # Next Button
         self.next_button = QPushButton()
-        self._set_button_icon(self.next_button, 'next', "Next", 16)
-        self.next_button.setFixedSize(44, 44); self.next_button.setObjectName("ControlButton")
+        self.next_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaSkipForward))
+        self.next_button.setFixedSize(48, 48); self.next_button.setIconSize(QSize(28, 28)); self.next_button.setObjectName("ControlButton")
         self.next_button.setToolTip("Next")
 
         # Control Buttons Layout
@@ -133,14 +124,10 @@ class MusicPlayerWindow(QWidget):
         # Loop mode options
         options_layout = QHBoxLayout()
         self.loop_button = QPushButton()
-        self._set_button_icon(self.loop_button, 'loop', "Loop", 16)
+        self.loop_button.setIcon(self._get_icon("normal.png"))
+        self.loop_button.setIconSize(self._control_icon_size)
         self.loop_button.setFixedSize(40, 40); self.loop_button.setObjectName("ControlButton")
-        self.loop_button.setToolTip("Loop All")
-
-        # Playlist Button
-        self.songs_list_button = QPushButton("Playlist")
-        self.songs_list_button.setObjectName("PlaylistButton")
-        self.songs_list_button.setToolTip("Show / Hide Playlist")
+        self.loop_button.setToolTip("Change Playback Mode")
 
         # Volume Button
         volume_layout = QHBoxLayout()
@@ -154,15 +141,25 @@ class MusicPlayerWindow(QWidget):
         volume_layout.addWidget(self.volume_button)
         volume_layout.addWidget(self.volume_slider)
 
+        # Help Button
+        self.help_button = QPushButton()
+        self.help_button.setFixedSize(36, 36)
+        self.help_button.setIcon(self._get_misc_icon("help.png"))
+        self.help_button.setIconSize(QSize(18, 18))
+        self.help_button.setObjectName("ControlButton")
+        self.help_button.setToolTip("Help / Shortcuts")
+
         options_layout.addWidget(self.loop_button)
         options_layout.addStretch()
         options_layout.addLayout(volume_layout)
         options_layout.addStretch()
-        options_layout.addWidget(self.songs_list_button)
+        options_layout.addWidget(self.help_button)
 
         # Playlist Widget
         self.song_list_widget = QListWidget()
-        self.song_list_widget.setVisible(False)
+        self.song_list_widget.setVisible(True)
+        self.song_list_widget.setMinimumHeight(140)
+        self.song_list_widget.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         content_layout.addLayout(info_layout)
         content_layout.addLayout(progress_layout)
@@ -328,34 +325,13 @@ class MusicPlayerWindow(QWidget):
             }
         """)
 
-    def _load_icon_font(self):
-        """Load Nerd Font symbols if present; return True if loaded."""
-        try:
-            from .constants import NERD_FONT_SYMBOLS
-        except Exception:
-            return False
+    def _get_icon(self, filename):
+        path = MUSIC_PLAYER_ICON_DIR / filename
+        return QIcon(str(path)) if path.exists() else QIcon()
 
-        if not NERD_FONT_SYMBOLS.exists():
-            return False
-
-        font_id = QFontDatabase.addApplicationFont(str(NERD_FONT_SYMBOLS))
-        if font_id == -1:
-            return False
-
-        families = QFontDatabase.applicationFontFamilies(font_id)
-        if not families:
-            return False
-
-        self.icon_font_family = families[0]
-        return True
-
-    def _set_button_icon(self, button, glyph_key, fallback_text, font_size):
-        """Apply glyph if available; otherwise fall back to readable text."""
-        if self.glyph_available and self.icon_font_family and glyph_key in self.glyphs:
-            button.setText(self.glyphs[glyph_key])
-            button.setFont(QFont(self.icon_font_family, font_size))
-        else:
-            button.setText(fallback_text)
+    def _get_misc_icon(self, filename):
+        path = IMAGE_DIR / "others" / filename
+        return QIcon(str(path)) if path.exists() else QIcon()
 
     def _connect_signals(self):
         self.minimize_button.clicked.connect(self.showMinimized)
@@ -364,7 +340,6 @@ class MusicPlayerWindow(QWidget):
         self.next_button.clicked.connect(self.next_song)
         self.prev_button.clicked.connect(self.prev_song)
         self.loop_button.clicked.connect(self.change_playback_mode)
-        self.songs_list_button.clicked.connect(self.toggle_song_list)
         self.song_list_widget.itemDoubleClicked.connect(self.play_from_list)
         self.media_player.playbackStateChanged.connect(self.update_play_pause_icon)
         self.media_player.positionChanged.connect(self.update_slider_position)
@@ -373,12 +348,20 @@ class MusicPlayerWindow(QWidget):
         self.progress_slider.sliderMoved.connect(self.media_player.setPosition)
         self.volume_slider.valueChanged.connect(self.set_volume)
         self.volume_button.clicked.connect(self.toggle_mute)
+        self.help_button.clicked.connect(self.show_help)
+        self.song_list_widget.installEventFilter(self)
         self.update_volume_icon()
         
     def _format_time(self, ms):
         seconds = int((ms / 1000) % 60)
         minutes = int((ms / (1000 * 60)) % 60)
         return f"{minutes}:{seconds:02d}"
+
+    def _format_song_label(self, title, artist, max_len=42):
+        text = f"{title} - {artist}"
+        if len(text) > max_len:
+            return text[: max_len - 3] + "..."
+        return text
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -391,8 +374,9 @@ class MusicPlayerWindow(QWidget):
     ### Music Directory Scanner ###
     def scan_music_directory(self):
         music_dir = MUSIC_DIR
-        self.playlist = []
+        songs = []
         self.song_list_widget.clear()
+        self._shuffle_queue = []
         if not music_dir.exists():
             return
 
@@ -419,10 +403,15 @@ class MusicPlayerWindow(QWidget):
                         thumbnail_path = song_dir / f"thumbnail{ext}"
                         break
 
-                song_data = {"title": title, "artist": artist, "path": mp3_path, "thumbnail": thumbnail_path}
-                self.playlist.append(song_data)
-                item = QListWidgetItem(f"{song_data['title']} - {song_data['artist']}")
-                self.song_list_widget.addItem(item)
+                songs.append({"title": title, "artist": artist, "path": mp3_path, "thumbnail": thumbnail_path})
+
+        songs.sort(key=lambda s: (s['title'].casefold(), s['artist'].casefold()))
+        self.playlist = songs
+
+        for song_data in self.playlist:
+            display = self._format_song_label(song_data['title'], song_data['artist'])
+            item = QListWidgetItem(display)
+            self.song_list_widget.addItem(item)
         
         if not self.playlist:
             self.title_label.setText("No music found")
@@ -453,39 +442,76 @@ class MusicPlayerWindow(QWidget):
 
     def next_song(self):
         if not self.playlist: return
-        if self.playback_mode == 'loop_one': self.play_song(self.current_index)
-        elif self.playback_mode == 'shuffle': self.play_song(randint(0, len(self.playlist) - 1))
-        else: self.play_song((self.current_index + 1) % len(self.playlist))
+        if self.playback_mode == 'shuffle':
+            self._ensure_shuffle_queue()
+            if not self._shuffle_queue:
+                return
+            next_index = self._shuffle_queue.pop(0)
+            self.play_song(next_index)
+        elif self.playback_mode == 'normal':
+            if self.current_index == -1:
+                self.play_song(0)
+            elif self.current_index < len(self.playlist) - 1:
+                self.play_song(self.current_index + 1)
+        else:
+            self.play_song((self.current_index + 1) % len(self.playlist))
 
     def prev_song(self):
         if not self.playlist: return
-        self.play_song((self.current_index - 1 + len(self.playlist)) % len(self.playlist))
+        if self.playback_mode == 'normal':
+            if self.current_index > 0:
+                self.play_song(self.current_index - 1)
+        else:
+            self.play_song((self.current_index - 1 + len(self.playlist)) % len(self.playlist))
 
     def toggle_play_pause(self):
         if self.media_player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
             self.media_player.pause()
         else:
             if self.current_index == -1 and self.playlist:
-                self.play_song(randint(0, len(self.playlist) - 1)) 
+                if self.playback_mode == 'shuffle':
+                    self._ensure_shuffle_queue()
+                    if self._shuffle_queue:
+                        self.play_song(self._shuffle_queue.pop(0))
+                    else:
+                        self.play_song(0)
+                else:
+                    self.play_song(0) 
             else:
                 self.media_player.play()
 
+        # Keep shuffle queue aligned if user manually starts playback
+        if self.playback_mode == 'shuffle' and self.current_index != -1:
+            self._remove_from_shuffle_queue(self.current_index)
+
     def change_playback_mode(self):
-        if self.playback_mode == 'loop_all': 
-            self.playback_mode = 'loop_one'
-            self._set_button_icon(self.loop_button, 'loop', "Loop 1", 16)
-            self.loop_button.setToolTip("Loop One")
-            self.tray_actions['loop'].setText("Mode: Loop One")
-        elif self.playback_mode == 'loop_one': 
+        if self.playback_mode == 'normal':
+            self.apply_playback_mode('loop_all')
+        elif self.playback_mode == 'loop_all':
+            self.apply_playback_mode('shuffle')
+        else:
+            self.apply_playback_mode('normal')
+
+    def apply_playback_mode(self, mode):
+        """Apply playback mode and sync button/tray iconography."""
+        if mode == 'shuffle':
             self.playback_mode = 'shuffle'
-            self._set_button_icon(self.loop_button, 'shuffle', "Shuffle", 16)
+            self.loop_button.setIcon(self._get_icon("shuffle.png"))
             self.loop_button.setToolTip("Shuffle")
             self.tray_actions['loop'].setText("Mode: Shuffle")
-        else: 
+            self._build_shuffle_queue()
+        elif mode == 'loop_all':
             self.playback_mode = 'loop_all'
-            self._set_button_icon(self.loop_button, 'loop', "Loop", 16)
+            self.loop_button.setIcon(self._get_icon("loop.png"))
             self.loop_button.setToolTip("Loop All")
             self.tray_actions['loop'].setText("Mode: Loop All")
+            self._shuffle_queue = []
+        else:
+            self.playback_mode = 'normal'
+            self.loop_button.setIcon(self._get_icon("normal.png"))
+            self.loop_button.setToolTip("Normal Order")
+            self.tray_actions['loop'].setText("Mode: Normal")
+            self._shuffle_queue = []
 
     def set_volume(self, value):
         self.volume = value / 100.0
@@ -501,30 +527,68 @@ class MusicPlayerWindow(QWidget):
         self.tray_actions['mute'].setText("Unmute" if self.is_muted else "Mute")
 
     def update_volume_icon(self):
-        if self.is_muted or self.volume == 0:
-            self._set_button_icon(self.volume_button, 'vol_mute', "Mute", 14)
-        elif self.volume < 0.34:
-            self._set_button_icon(self.volume_button, 'vol_low', "Low", 14)
-        elif self.volume < 0.67:
-            self._set_button_icon(self.volume_button, 'vol_mid', "Mid", 14)
-        else:
-            self._set_button_icon(self.volume_button, 'vol_high', "High", 14)
-
-    def toggle_song_list(self):
-        self.song_list_widget.setVisible(not self.song_list_widget.isVisible())
+        icon = self._get_icon("volume-muted.png" if (self.is_muted or self.volume == 0) else "volume.png")
+        self.volume_button.setIcon(icon)
+        self.volume_button.setIconSize(self._control_icon_size)
 
     def play_from_list(self, item):
+        self.apply_playback_mode('normal')
         self.play_song(self.song_list_widget.row(item))
 
     def update_play_pause_icon(self, state):
         if state == QMediaPlayer.PlaybackState.PlayingState:
-            self._set_button_icon(self.play_pause_button, 'pause', "Pause", 17)
+            self.play_pause_button.setIcon(self._get_icon("pause.png"))
+            self.play_pause_button.setIconSize(self._play_icon_size)
             self.play_pause_button.setToolTip("Pause")
             self.tray_actions['play_pause'].setText("Pause")
         else:
-            self._set_button_icon(self.play_pause_button, 'play', "Play", 17)
+            self.play_pause_button.setIcon(self._get_icon("play.png"))
+            self.play_pause_button.setIconSize(self._play_icon_size)
             self.play_pause_button.setToolTip("Play")
             self.tray_actions['play_pause'].setText("Play")
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key in (Qt.Key.Key_Up, Qt.Key.Key_K):
+            self._move_selection(-1)
+            return
+        if key in (Qt.Key.Key_Down, Qt.Key.Key_J):
+            self._move_selection(1)
+            return
+        if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            row = self.song_list_widget.currentRow()
+            if 0 <= row < self.song_list_widget.count():
+                self.apply_playback_mode('normal')
+                self.play_song(row)
+            return
+        if key == Qt.Key.Key_P:
+            self.toggle_play_pause()
+            return
+        if key == Qt.Key.Key_M:
+            self.change_playback_mode()
+            return
+        super().keyPressEvent(event)
+
+    def _move_selection(self, delta):
+        count = self.song_list_widget.count()
+        if count == 0:
+            return
+        current = self.song_list_widget.currentRow()
+        if current == -1:
+            new_row = 0 if delta > 0 else count - 1
+        else:
+            new_row = max(0, min(count - 1, current + delta))
+        self.song_list_widget.setCurrentRow(new_row)
+        self.song_list_widget.scrollToItem(self.song_list_widget.currentItem())
+
+    def eventFilter(self, obj, event):
+        if obj == self.song_list_widget and event.type() == event.Type.KeyPress:
+            key = event.key()
+            if key in (Qt.Key.Key_Up, Qt.Key.Key_K, Qt.Key.Key_Down, Qt.Key.Key_J,
+                       Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_P, Qt.Key.Key_M):
+                self.keyPressEvent(event)
+                return True
+        return super().eventFilter(obj, event)
 
     def update_slider_position(self, position):
         self.progress_slider.setValue(position)
@@ -536,7 +600,63 @@ class MusicPlayerWindow(QWidget):
 
     def handle_media_status(self, status):
         if status == QMediaPlayer.MediaStatus.EndOfMedia:
+            if self.playback_mode == 'normal' and self.current_index >= len(self.playlist) - 1:
+                return
             self.next_song()
+
+    # Shuffle helpers
+    def _build_shuffle_queue(self):
+        from random import shuffle
+        self._shuffle_queue = list(range(len(self.playlist)))
+        if self.current_index in self._shuffle_queue:
+            self._shuffle_queue.remove(self.current_index)
+        shuffle(self._shuffle_queue)
+
+    def _ensure_shuffle_queue(self):
+        if not self._shuffle_queue:
+            self._build_shuffle_queue()
+
+    def _remove_from_shuffle_queue(self, index):
+        if index in self._shuffle_queue:
+            self._shuffle_queue.remove(index)
+
+    def show_help(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Music Player Help")
+        dialog.setWindowModality(Qt.WindowModality.WindowModal)
+        dialog.setFixedSize(360, 320)
+        layout = QVBoxLayout(dialog)
+
+        instructions = QTextBrowser(dialog)
+        instructions.setReadOnly(True)
+        instructions.setOpenExternalLinks(False)
+        instructions.setStyleSheet("font-size: 12px;")
+        instructions.setHtml(
+            """
+            <h2>Keybind</h2>
+            <ul>
+              <li><b>Up / K</b>: Move selection up</li>
+              <li><b>Down / J</b>: Move selection down</li>
+              <li><b>Enter</b>: Play selected (switches to Normal)</li>
+              <li><b>P</b>: Play/Pause</li>
+              <li><b>M</b>: Change Mode</li>
+            </ul>
+            <h2>Modes</h2>
+            <ul>
+                <li><b>Normal</b>: Alphabetical order, repeats the playlist upon end</li>
+                <li><b>Loop</b>: Repeats the current song</li>
+                <li><b>Shuffle</b>: Plays all tracks in random order</li>
+            </ul>
+            """
+        )
+
+        ok_button = QPushButton("OK", dialog)
+        ok_button.clicked.connect(dialog.accept)
+        ok_button.setFixedHeight(30)
+
+        layout.addWidget(instructions)
+        layout.addWidget(ok_button)
+        dialog.exec()
 
     def closeEvent(self, event):
         self.hide()
