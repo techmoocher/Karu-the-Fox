@@ -4,11 +4,11 @@ Main component
 '''
 
 import json
-import sys
 from random import choice, random, randint
 from datetime import datetime
 from PySide6.QtWidgets import (QApplication, QWidget,
-                               QLabel, QVBoxLayout, QDialog)
+                               QLabel, QVBoxLayout,
+                               QDialog)
 from PySide6.QtGui import (QPixmap, QMovie,
                            QAction, QFont)
 from PySide6.QtCore import (Qt, QTimer, QUrl)
