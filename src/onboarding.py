@@ -2,8 +2,10 @@
 '''
 
 '''
-from PySide6.QtWidgets import (QWidget, QLabel, QVBoxLayout, QDialog,
-                               QPushButton, QHBoxLayout, QRadioButton, QButtonGroup)
+from PySide6.QtWidgets import (QWidget, QLabel,
+                               QVBoxLayout, QDialog,
+                               QPushButton, QHBoxLayout,
+                               QRadioButton, QButtonGroup)
 from PySide6.QtCore import Qt
 
 
@@ -22,13 +24,18 @@ class SpeechBubble(QWidget):
         self.setLayout(self._layout)
 
     def show_smartly_positioned(self):
-        parent_geometry = self.parentWidget().geometry()
-        x = parent_geometry.center().x() - self.width() / 2
-        y_above = parent_geometry.top() - self.height() - 5
-        self.move(int(x), int(y_above if y_above > 0 else parent_geometry.bottom() + 5))
+        parent = self.parentWidget()
+        if parent:
+            parent_geometry = parent.geometry()
+            x = parent_geometry.center().x() - self.width() / 2
+            y_above = parent_geometry.top() - self.height() - 5
+
+            self.move(int(x), int(y_above if y_above > 0 else parent_geometry.bottom() + 5))
+        else:
+            print("This widget has no parent (it might be a top-level window).")
+
         self.show()
 
-### --- Feeling Survey Window --- ###
 class RatingDialog(QDialog):
     def __init__(self, question, parent=None):
         super().__init__(parent)

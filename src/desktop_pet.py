@@ -2,17 +2,17 @@
 '''
 Main component
 '''
+
 import json
 from random import choice, random, randint
 from datetime import datetime
-from PySide6.QtWidgets import (QApplication, QWidget, QLabel, QVBoxLayout,
-                               QDialog, QPushButton, QMenu, QSystemTrayIcon,
-                               QStyle)
-from PySide6.QtGui import (QPixmap, QMovie,
-                           QAction, QIcon,
-                           QFont, QCursor)
-from PySide6.QtCore import Qt, QTimer, QUrl, QPoint
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PySide6.QtWidgets import (QApplication, QWidget, QLabel,
+                               QVBoxLayout, QDialog, QMenu,
+                               QSystemTrayIcon)
+from PySide6.QtGui import (QPixmap, QMovie, QAction,
+                           QIcon, QFont)
+from PySide6.QtCore import (Qt, QTimer, QUrl)
+from PySide6.QtMultimedia import (QMediaPlayer, QAudioOutput)
 
 from .music_player import MusicPlayerWindow
 from .onboarding import SpeechBubble, RatingDialog
