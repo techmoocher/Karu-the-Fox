@@ -3,11 +3,11 @@
 Pomodoro Timer - A Pomodoro timer widget for Karu the Fox desktop pet.
 '''
 
-from PySide6.QtWidgets import (
-    QWidget, QLabel, QVBoxLayout,
-    QHBoxLayout, QPushButton, QSlider,
-    QComboBox, QFrame, QSystemTrayIcon, QDialog,
-)
+from PySide6.QtWidgets import (QWidget, QLabel,
+                               QVBoxLayout, QHBoxLayout,
+                               QPushButton, QSlider,
+                               QComboBox, QFrame,
+                               QSystemTrayIcon, QDialog)
 from PySide6.QtCore import Qt, QTimer, QPoint, QUrl
 from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput

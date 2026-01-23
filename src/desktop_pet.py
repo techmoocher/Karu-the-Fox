@@ -10,8 +10,9 @@ from PySide6.QtWidgets import (QApplication, QWidget,
                                QLabel, QVBoxLayout,
                                QDialog, QMenu,
                                QSystemTrayIcon)
-from PySide6.QtGui import (QPixmap, QMovie, QAction,
-                           QIcon, QFont)
+from PySide6.QtGui import (QPixmap, QMovie,
+                           QAction, QIcon,
+                           QFont)
 from PySide6.QtCore import (Qt, QTimer, QUrl)
 from PySide6.QtMultimedia import (QMediaPlayer, QAudioOutput)
 
@@ -198,16 +199,16 @@ class DesktopPet(QWidget):
         # Apply playback mode
         win.playback_mode = config['playback_mode']
         if win.playback_mode == 'loop_one':
-            win.loop_button.setIcon(win.icons['loop_one'])
+            win.loop_button.setText("")
             win.loop_button.setToolTip("Loop One")
             win.tray_actions['loop'].setText("Mode: Loop One")
         elif win.playback_mode == 'shuffle':
-            win.loop_button.setIcon(win.icons['shuffle'])
+            win.loop_button.setText("")
             win.loop_button.setToolTip("Shuffle")
             win.tray_actions['loop'].setText("Mode: Shuffle")
         else: 
             win.playback_mode = 'loop_all'
-            win.loop_button.setIcon(win.icons['loop_all'])
+            win.loop_button.setText("")
             win.loop_button.setToolTip("Loop All")
             win.tray_actions['loop'].setText("Mode: Loop All")
 
@@ -303,7 +304,6 @@ class DesktopPet(QWidget):
         self.pomodoro_window.activateWindow()
 
     def start_intro_sequence(self):
-        self.music_menu.setEnabled(False)
         hour = datetime.now().hour
         greeting = "Good morning!" if 5 <= hour < 12 else "Good afternoon!" if 12 <= hour < 18 else "Good evening!"
         self.show_bubble(greeting)

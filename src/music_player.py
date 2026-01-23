@@ -5,10 +5,10 @@ Music Player - A simple music player interface for Karu the Fox desktop pet.
 from random import randint
 from PySide6.QtWidgets import (QWidget, QLabel, QVBoxLayout,
                                QPushButton, QHBoxLayout,
-                               QListWidget, QSlider, QStyle,
+                               QListWidget, QSlider,
                                QListWidgetItem, QFrame)
-from PySide6.QtGui import QPixmap, QIcon
-from PySide6.QtCore import Qt, QUrl, QSize, QPoint
+from PySide6.QtGui import QPixmap, QIcon, QFont, QFontDatabase
+from PySide6.QtCore import Qt, QUrl, QPoint
 from PySide6.QtMultimedia import QMediaPlayer
 from .constants import IMAGE_DIR, MUSIC_DIR
 
@@ -25,16 +25,19 @@ class MusicPlayerWindow(QWidget):
         self.volume = 1.0
         self.drag_pos = QPoint()
 
-        ### Icons ###
-        self.icons = {
-            'loop_all': QIcon(str(IMAGE_DIR / "control-buttons" / "loop-all.png")),
-            'loop_one': QIcon(str(IMAGE_DIR / "control-buttons" / "loop-1.png")),
-            'shuffle': QIcon(str(IMAGE_DIR / "control-buttons" / "shuffle.png")),
-            'volume_full': QIcon(str(IMAGE_DIR / "control-buttons" / "volume-full.png")),
-            'volume_half': QIcon(str(IMAGE_DIR / "control-buttons" / "volume-half.png")),
-            'volume_muted': QIcon(str(IMAGE_DIR / "control-buttons" / "volume-muted.png")),
-            'play': QIcon(str(IMAGE_DIR / "control-buttons" / "play.png")),
-            'pause': QIcon(str(IMAGE_DIR / "control-buttons" / "pause.png"))
+        self.icon_font_family = None
+        self.glyph_available = self._load_icon_font()
+        self.glyphs = {
+            'prev': "󰒮",
+            'next': "󰒭",
+            'play': "",
+            'pause': "",
+            'loop': "",
+            'shuffle': "",
+            'vol_mute': "󰖁",
+            'vol_low': "󰕿",
+            'vol_mid': "󰖀",
+            'vol_high': "󰕾",
         }
 
         ### Window Flags and Attributes ###
@@ -103,20 +106,21 @@ class MusicPlayerWindow(QWidget):
         # Previous Button
         controls_layout = QHBoxLayout()
         self.prev_button = QPushButton()
-        self.prev_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaSkipBackward))
-        self.prev_button.setFixedSize(48, 48); self.prev_button.setIconSize(QSize(28, 28)); self.prev_button.setObjectName("ControlButton")
+        self._set_button_icon(self.prev_button, 'prev', "Prev", 16)
+        self.prev_button.setFixedSize(44, 44); self.prev_button.setObjectName("ControlButton")
         self.prev_button.setToolTip("Previous")
 
-        # Play/Pause Button
+        # Play/Pause Button (glyph-based, smaller)
         self.play_pause_button = QPushButton()
-        self.play_pause_button.setIcon(self.icons['play'])
-        self.play_pause_button.setFixedSize(64, 64); self.play_pause_button.setIconSize(QSize(40, 40)); self.play_pause_button.setObjectName("PlayPauseButton")
+        self._set_button_icon(self.play_pause_button, 'play', "Play", 17)
+        self.play_pause_button.setFixedSize(56, 56)
+        self.play_pause_button.setObjectName("PlayPauseButton")
         self.play_pause_button.setToolTip("Play")
 
         # Next Button
         self.next_button = QPushButton()
-        self.next_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaSkipForward))
-        self.next_button.setFixedSize(48, 48); self.next_button.setIconSize(QSize(28, 28)); self.next_button.setObjectName("ControlButton")
+        self._set_button_icon(self.next_button, 'next', "Next", 16)
+        self.next_button.setFixedSize(44, 44); self.next_button.setObjectName("ControlButton")
         self.next_button.setToolTip("Next")
 
         # Control Buttons Layout
@@ -129,8 +133,8 @@ class MusicPlayerWindow(QWidget):
         # Loop mode options
         options_layout = QHBoxLayout()
         self.loop_button = QPushButton()
-        self.loop_button.setIcon(self.icons['loop_all'])
-        self.loop_button.setFixedSize(40, 40); self.loop_button.setIconSize(QSize(24, 24)); self.loop_button.setObjectName("ControlButton")
+        self._set_button_icon(self.loop_button, 'loop', "Loop", 16)
+        self.loop_button.setFixedSize(40, 40); self.loop_button.setObjectName("ControlButton")
         self.loop_button.setToolTip("Loop All")
 
         # Playlist Button
@@ -141,7 +145,7 @@ class MusicPlayerWindow(QWidget):
         # Volume Button
         volume_layout = QHBoxLayout()
         self.volume_button = QPushButton()
-        self.volume_button.setFixedSize(40, 40); self.volume_button.setIconSize(QSize(24, 24)); self.volume_button.setObjectName("ControlButton")
+        self.volume_button.setFixedSize(40, 40); self.volume_button.setObjectName("ControlButton")
         self.volume_button.setToolTip("Mute / Unmute")
         self.volume_slider = QSlider(Qt.Orientation.Horizontal)
         self.volume_slider.setFixedWidth(120)
@@ -180,8 +184,8 @@ class MusicPlayerWindow(QWidget):
         title_bar_layout.setContentsMargins(10, 0, 0, 0)
         title_bar_layout.setSpacing(10)
 
-        title_label = QLabel("Fox Music")
-        title_label.setStyleSheet("font-weight: bold; color: #FFA01E;")
+        title_label = QLabel("Dance with Karu")
+        title_label.setStyleSheet("font-weight: bold; color: #000000;")
         
         self.minimize_button = QPushButton("—")
         self.close_button = QPushButton("✕")
@@ -199,10 +203,10 @@ class MusicPlayerWindow(QWidget):
     
     def _apply_stylesheet(self):
         self.setStyleSheet("""
-            /* Pastel pixel theme */
             * {
                 font-family: "Press Start 2P", "VT323", "Courier New", monospace;
                 letter-spacing: 0.5px;
+                font-size: 13px;
             }
 
             #CentralFrame {
@@ -235,12 +239,12 @@ class MusicPlayerWindow(QWidget):
             }
 
             #TitleLabel {
-                font-size: 18px;
+                font-size: 20px;
                 font-weight: bold;
                 color: #0F1B2D;
             }
             #ArtistLabel {
-                font-size: 12px;
+                font-size: 14px;
                 color: #294368;
             }
             #Thumbnail {
@@ -255,6 +259,8 @@ class MusicPlayerWindow(QWidget):
                 border-radius: 6px;
                 color: #0F1B2D;
                 padding: 6px 10px;
+                font-size: 13px;
+                line-height: 1.2em;
             }
             #ControlButton:hover, #PlaylistButton:hover, #PlayPauseButton:hover { background: #BFE6FF; }
             #ControlButton:pressed, #PlaylistButton:pressed, #PlayPauseButton:pressed {
@@ -262,12 +268,13 @@ class MusicPlayerWindow(QWidget):
                 margin-top: 2px;
             }
             #PlayPauseButton {
-                min-width: 70px;
-                min-height: 70px;
-                border-radius: 10px;
+                min-width: 56px;
+                min-height: 56px;
+                border-radius: 8px;
                 background: #8BC7FF;
+                font-size: 13px;
             }
-            #PlaylistButton { font-size: 12px; padding: 8px 14px; }
+            #PlaylistButton { font-size: 13px; padding: 8px 14px; font-weight: bold; }
 
             QSlider::groove:horizontal {
                 border: 3px solid #1F3D66;
@@ -286,9 +293,9 @@ class MusicPlayerWindow(QWidget):
             QSlider::handle:horizontal {
                 background: #1F3D66;
                 border: 2px solid #0F1B2D;
-                width: 18px;
-                height: 18px;
-                margin: -7px 0;
+                width: 16px;
+                height: 16px;
+                margin: -6px 0;
                 border-radius: 2px;
             }
 
@@ -308,6 +315,8 @@ class MusicPlayerWindow(QWidget):
 
             #TimeLabel {
                 color: #000000;
+                font-weight: bold;
+                font-size: 13px;
             }
 
             QToolTip {
@@ -318,6 +327,35 @@ class MusicPlayerWindow(QWidget):
                 font-size: 10px;
             }
         """)
+
+    def _load_icon_font(self):
+        """Load Nerd Font symbols if present; return True if loaded."""
+        try:
+            from .constants import NERD_FONT_SYMBOLS
+        except Exception:
+            return False
+
+        if not NERD_FONT_SYMBOLS.exists():
+            return False
+
+        font_id = QFontDatabase.addApplicationFont(str(NERD_FONT_SYMBOLS))
+        if font_id == -1:
+            return False
+
+        families = QFontDatabase.applicationFontFamilies(font_id)
+        if not families:
+            return False
+
+        self.icon_font_family = families[0]
+        return True
+
+    def _set_button_icon(self, button, glyph_key, fallback_text, font_size):
+        """Apply glyph if available; otherwise fall back to readable text."""
+        if self.glyph_available and self.icon_font_family and glyph_key in self.glyphs:
+            button.setText(self.glyphs[glyph_key])
+            button.setFont(QFont(self.icon_font_family, font_size))
+        else:
+            button.setText(fallback_text)
 
     def _connect_signals(self):
         self.minimize_button.clicked.connect(self.showMinimized)
@@ -335,6 +373,7 @@ class MusicPlayerWindow(QWidget):
         self.progress_slider.sliderMoved.connect(self.media_player.setPosition)
         self.volume_slider.valueChanged.connect(self.set_volume)
         self.volume_button.clicked.connect(self.toggle_mute)
+        self.update_volume_icon()
         
     def _format_time(self, ms):
         seconds = int((ms / 1000) % 60)
@@ -434,17 +473,17 @@ class MusicPlayerWindow(QWidget):
     def change_playback_mode(self):
         if self.playback_mode == 'loop_all': 
             self.playback_mode = 'loop_one'
-            self.loop_button.setIcon(self.icons['loop_one'])
+            self._set_button_icon(self.loop_button, 'loop', "Loop 1", 16)
             self.loop_button.setToolTip("Loop One")
             self.tray_actions['loop'].setText("Mode: Loop One")
         elif self.playback_mode == 'loop_one': 
             self.playback_mode = 'shuffle'
-            self.loop_button.setIcon(self.icons['shuffle'])
+            self._set_button_icon(self.loop_button, 'shuffle', "Shuffle", 16)
             self.loop_button.setToolTip("Shuffle")
             self.tray_actions['loop'].setText("Mode: Shuffle")
         else: 
             self.playback_mode = 'loop_all'
-            self.loop_button.setIcon(self.icons['loop_all'])
+            self._set_button_icon(self.loop_button, 'loop', "Loop", 16)
             self.loop_button.setToolTip("Loop All")
             self.tray_actions['loop'].setText("Mode: Loop All")
 
@@ -463,26 +502,27 @@ class MusicPlayerWindow(QWidget):
 
     def update_volume_icon(self):
         if self.is_muted or self.volume == 0:
-            self.volume_button.setIcon(self.icons['volume_muted'])
-        elif self.volume < 0.5:
-            self.volume_button.setIcon(self.icons['volume_half'])
+            self._set_button_icon(self.volume_button, 'vol_mute', "Mute", 14)
+        elif self.volume < 0.34:
+            self._set_button_icon(self.volume_button, 'vol_low', "Low", 14)
+        elif self.volume < 0.67:
+            self._set_button_icon(self.volume_button, 'vol_mid', "Mid", 14)
         else:
-            self.volume_button.setIcon(self.icons['volume_full'])
+            self._set_button_icon(self.volume_button, 'vol_high', "High", 14)
 
     def toggle_song_list(self):
         self.song_list_widget.setVisible(not self.song_list_widget.isVisible())
-        self.adjustSize()
 
     def play_from_list(self, item):
         self.play_song(self.song_list_widget.row(item))
 
     def update_play_pause_icon(self, state):
         if state == QMediaPlayer.PlaybackState.PlayingState:
-            self.play_pause_button.setIcon(self.icons['pause'])
+            self._set_button_icon(self.play_pause_button, 'pause', "Pause", 17)
             self.play_pause_button.setToolTip("Pause")
             self.tray_actions['play_pause'].setText("Pause")
         else:
-            self.play_pause_button.setIcon(self.icons['play'])
+            self._set_button_icon(self.play_pause_button, 'play', "Play", 17)
             self.play_pause_button.setToolTip("Play")
             self.tray_actions['play_pause'].setText("Play")
 

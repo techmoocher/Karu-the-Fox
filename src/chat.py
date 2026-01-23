@@ -77,6 +77,7 @@ class ChatWindow(QWidget):
         self.close_button.setObjectName("WindowButton")
         title_bar_layout.addWidget(title_label)
         title_bar_layout.addStretch()
+        title_bar_layout.addWidget(self.minimize_button)
         title_bar_layout.addWidget(self.close_button)
         self.main_layout.addWidget(title_bar)
         
