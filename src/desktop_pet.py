@@ -9,8 +9,7 @@ from datetime import datetime
 from PySide6.QtWidgets import (QApplication, QWidget,
                                QLabel, QVBoxLayout,
                                QDialog)
-from PySide6.QtGui import (QPixmap, QMovie,
-                           QAction, QFont)
+from PySide6.QtGui import (QPixmap, QMovie, QAction, QFont)
 from PySide6.QtCore import (Qt, QTimer, QUrl)
 from PySide6.QtMultimedia import (QMediaPlayer, QAudioOutput)
 
