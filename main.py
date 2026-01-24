@@ -16,6 +16,7 @@ def main():
     _ctrl_c_pump.start(200)
 
     pet = DesktopPet()
+
     sys.exit(app.exec())
 
 if __name__ == '__main__':
