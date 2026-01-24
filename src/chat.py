@@ -5,8 +5,10 @@ Chat with Karu - AI-powered chat window for Karu the Fox desktop pet.
 
 import os
 import json
-from PySide6.QtWidgets import (QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxLayout,
-                               QFrame, QTextEdit, QLineEdit)
+from PySide6.QtWidgets import (QWidget, QLabel,
+                               QVBoxLayout, QPushButton,
+                               QHBoxLayout, QFrame,
+                               QTextEdit, QLineEdit)
 from PySide6.QtGui import QIcon, QFontDatabase
 from PySide6.QtCore import Qt, QPoint, QUrl
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
@@ -195,8 +197,11 @@ class ChatWindow(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            if self.main_layout.itemAt(0).widget().geometry().contains(event.pos()):
-                self.drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            item = self.main_layout.itemAt(0)
+            if item:
+                widget = item.widget()
+                if widget and widget.geometry().contains(event.pos()):
+                    self.drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
     
     def mouseMoveEvent(self, event):
         if event.buttons() == Qt.MouseButton.LeftButton and not self.drag_pos.isNull():
@@ -204,6 +209,16 @@ class ChatWindow(QWidget):
 
     def mouseReleaseEvent(self, event):
         self.drag_pos = QPoint()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Slash:
+            self.input_box.setFocus()
+            if not self.input_box.text():
+                self.input_box.setText("/")
+                self.input_box.setCursorPosition(len(self.input_box.text()))
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
     def send_message(self):
         user_text = self.input_box.text().strip()
