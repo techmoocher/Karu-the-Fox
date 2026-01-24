@@ -1,7 +1,6 @@
 TITLE_DISPLAY_LIMIT = 25
 ARTIST_DISPLAY_LIMIT = 22
 
-
 def _truncate(text: str, limit: int) -> str:
 	if len(text) <= limit:
 		return text

@@ -125,14 +125,16 @@ MUSIC_PLAYER_STYLESHEET = r"""
 """
 
 HELP_HTML = """
-<h2>Keybind</h2>
+<h2>Keybinds</h2>
 <ul>
-  <li><b>Up / K</b>: Move selection up</li>
-  <li><b>Down / J</b>: Move selection down</li>
-  <li><b>Enter</b>: Play selected (switches to Normal)</li>
-  <li><b>P</b>: Play/Pause</li>
-  <li><b>M</b>: Change Mode</li>
+	<li><b>Double-click</b>: Play selected (switches to Normal)</li>
+  	<li><b>Up / K</b>: Move selection up</li>
+  	<li><b>Down / J</b>: Move selection down</li>
+  	<li><b>Enter</b>: Play selected (switches to Normal)</li>
+  	<li><b>P</b>: Play/Pause</li>
+  	<li><b>M</b>: Change Mode</li>
 </ul>
+
 <h2>Modes</h2>
 <ul>
 	<li><b>Normal</b>: Alphabetical order, repeats the playlist upon end</li>

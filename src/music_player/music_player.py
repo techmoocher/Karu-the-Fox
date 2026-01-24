@@ -1,19 +1,10 @@
-from PySide6.QtWidgets import (
-	QDialog,
-	QFrame,
-	QHBoxLayout,
-	QLabel,
-	QPushButton,
-	QSlider,
-	QStyle,
-	QTableWidget,
-	QTableWidgetItem,
-	QTextBrowser,
-	QVBoxLayout,
-	QWidget,
-	QHeaderView,
-	QAbstractItemView,
-)
+from PySide6.QtWidgets import (QDialog, QFrame,
+							   QHBoxLayout, QLabel,
+							   QPushButton, QSlider,
+							   QStyle, QTableWidget,
+							   QTableWidgetItem, QTextBrowser,
+							   QVBoxLayout, QWidget,
+							   QHeaderView, QAbstractItemView)
 from PySide6.QtCore import QPoint, Qt, QUrl, QSize
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtMultimedia import QMediaPlayer
@@ -48,6 +39,9 @@ class MusicPlayerWindow(QWidget):
 		self._control_icon_size = QSize(22, 22)
 		self._play_icon_size = QSize(32, 32)
 		self._shuffle_queue = []
+		self._marquee_timer = None
+		self._marquee_text = ""
+		self._marquee_index = 0
 
 		self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
 		self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
@@ -185,12 +179,46 @@ class MusicPlayerWindow(QWidget):
 		self.song_list_widget.setSelectionBehavior(
 			QAbstractItemView.SelectionBehavior.SelectRows
 		)
+		self.song_list_widget.setSelectionMode(
+			QAbstractItemView.SelectionMode.SingleSelection
+		)
 		self.song_list_widget.setEditTriggers(
 			QAbstractItemView.EditTrigger.NoEditTriggers
 		)
 		self.song_list_widget.setShowGrid(False)
+		self.song_list_widget.setFrameShape(QFrame.Shape.NoFrame)
 		self.song_list_widget.setMinimumHeight(180)
 		self.song_list_widget.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+		self.song_list_widget.setStyleSheet(
+			"""
+			QTableWidget {
+				background: #101318;
+				color: #e8ecf2;
+				selection-background-color: #273043;
+				selection-color: #f7f9fb;
+				gridline-color: transparent;
+				border: 1px solid #1e2430;
+				border-radius: 8px;
+			}
+			QHeaderView::section {
+				background: #1b202b;
+				color: #cfd5e3;
+				padding: 6px 10px;
+				border: none;
+				font-weight: 600;
+			}
+			QTableWidget::item {
+				padding: 8px 10px;
+			}
+			QTableWidget::item:hover {
+				background: #1f2634;
+			}
+			QTableWidget::item:selected {
+				background: #30405b;
+				color: #f7f9fb;
+			}
+			"""
+		)
 
 		content_layout.addLayout(info_layout)
 		content_layout.addLayout(progress_layout)
@@ -279,9 +307,9 @@ class MusicPlayerWindow(QWidget):
 			number_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 			number_item.setFlags(number_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
-			label_item = QTableWidgetItem(
-				format_song_label(song_data["title"], song_data["artist"])
-			)
+			label_text = format_song_label(song_data["title"], song_data["artist"])
+			label_item = QTableWidgetItem(label_text)
+			label_item.setToolTip(f"{song_data['title']} - {song_data['artist']}")
 			label_item.setFlags(label_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
 			self.song_list_widget.setItem(idx, 0, number_item)
@@ -299,13 +327,41 @@ class MusicPlayerWindow(QWidget):
 			pass
 		self.media_player.durationChanged.connect(self.set_slider_range)
 
+	def _start_title_marquee(self, full_text: str):
+		if self._marquee_timer:
+			self._marquee_timer.stop()
+		self._marquee_text = full_text or ""
+		self._marquee_index = 0
+		visible_chars = max(10, len(format_title_display(full_text)))
+		if len(self._marquee_text) <= visible_chars:
+			self.title_label.setText(self._marquee_text)
+			self._marquee_timer = None
+			return
+
+		from PySide6.QtCore import QTimer  # lazy import to avoid global timer creation
+		self._marquee_timer = QTimer(self)
+		self._marquee_timer.timeout.connect(self._tick_marquee)
+		self._marquee_timer.start(250)
+		self._tick_marquee()
+
+	def _tick_marquee(self):
+		if not self._marquee_text:
+			return
+		window = format_title_display(self._marquee_text)
+		span = len(window)
+		full = self._marquee_text + "  •  "
+		pos = self._marquee_index % len(full)
+		segment = (full + full)[pos : pos + span]
+		self.title_label.setText(segment)
+		self._marquee_index += 1
+
 	def play_song(self, index):
 		if 0 <= index < len(self.playlist):
 			self.current_index = index
 			song = self.playlist[index]
 			self.media_player.setSource(QUrl.fromLocalFile(str(song["path"].absolute())))
 			self.media_player.play()
-			self.title_label.setText(format_title_display(song["title"]))
+			self._start_title_marquee(song["title"])
 			self.artist_label.setText(format_artist_display(song["artist"]))
 			thumbnail_pixmap = QPixmap()
 			thumbnail_data = song.get("thumbnail_data")
