@@ -1,5 +1,6 @@
 from ..constants import IMAGE_DIR, MUSIC_DIR
 
 MUSIC_PLAYER_ICON_DIR = IMAGE_DIR / "music-player"
+NO_ART_IMAGE_PATH = MUSIC_PLAYER_ICON_DIR / "no-art-found.png"
 
-__all__ = ["IMAGE_DIR", "MUSIC_DIR", "MUSIC_PLAYER_ICON_DIR"]
+__all__ = ["IMAGE_DIR", "MUSIC_DIR", "MUSIC_PLAYER_ICON_DIR", "NO_ART_IMAGE_PATH"]

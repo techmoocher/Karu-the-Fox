@@ -16,6 +16,8 @@ from PySide6.QtMultimedia import (QMediaPlayer, QAudioOutput)
 from .tray_menu import TrayMenuManager
 from .help import HelpDialog
 from .music_player import MusicPlayerWindow
+from .music_player.constants import NO_ART_IMAGE_PATH
+from .music_player.utils import format_artist_display, format_title_display
 from .onboarding import SpeechBubble, RatingDialog
 from .chat import ChatWindow
 from .pomodoro import PomodoroWindow
@@ -167,12 +169,18 @@ class DesktopPet(QWidget):
         except (FileNotFoundError, json.JSONDecodeError, IOError):
             config_data = {}
 
-        config_data.update({
-            "last_track_index": self.music_player_window.current_index,
+        current_index = self.music_player_window.current_index
+        music_config = {
+            "last_track_index": current_index,
             "volume": self.music_player_window.volume_slider.value(),
             "is_muted": self.media_player.audioOutput().isMuted(),
-            "playback_mode": self.music_player_window.playback_mode
-        })
+            "playback_mode": self.music_player_window.playback_mode,
+        }
+
+        for legacy_key in ("last_track_index", "last_track_path", "volume", "is_muted", "playback_mode"):
+            config_data.pop(legacy_key, None)
+
+        config_data["music"] = music_config
 
         try:
             with open(CONFIG_FILE, 'w') as f:
@@ -181,20 +189,29 @@ class DesktopPet(QWidget):
             print(f"Error saving config: {e}")
 
     def _load_or_create_config(self):
-        default_config = {
+        default_music_config = {
             "last_track_index": -1,
             "volume": 100,
             "is_muted": False,
-            "playback_mode": "normal"
+            "playback_mode": "normal",
         }
 
         try:
             with open(CONFIG_FILE, 'r') as f:
                 config_data = json.load(f)
-                default_config.update(config_data) 
-                return default_config
         except (FileNotFoundError, json.JSONDecodeError, IOError):
-            return default_config
+            return default_music_config
+
+        music_section = config_data.get("music", {}) if isinstance(config_data, dict) else {}
+        legacy_music = {
+            key: config_data.get(key)
+            for key in default_music_config.keys()
+            if isinstance(config_data, dict) and key in config_data
+        }
+
+        merged = {**default_music_config, **{k: v for k, v in legacy_music.items() if v is not None}}
+        merged.update({k: v for k, v in music_section.items() if v is not None})
+        return merged
         
     def _apply_config_to_player(self):
         win = self.music_player_window
@@ -213,22 +230,48 @@ class DesktopPet(QWidget):
         if mode == 'loop_one':
             mode = 'normal'
         win.apply_playback_mode(mode)
-        last_index = config['last_track_index']
+        last_index = config.get('last_track_index', -1)
+        if not (0 <= last_index < len(win.playlist)):
+            last_index = -1
 
-        if 0 <= last_index < len(win.playlist):
+        if last_index != -1:
             win.current_index = last_index
             song = win.playlist[last_index]
 
             win.media_player.setSource(QUrl.fromLocalFile(str(song['path'].absolute())))
 
-            win.title_label.setText(song['title'])
-            win.artist_label.setText(song['artist'])
-            if song['thumbnail']:
-                win.thumbnail_label.setPixmap(QPixmap(str(song['thumbnail'])).scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+            title = song.get('title', 'Unknown Title')
+            artist = song.get('artist', 'Unknown Author')
+            win.title_label.setText(format_title_display(title))
+            win.artist_label.setText(format_artist_display(artist))
+
+            thumbnail_pixmap = QPixmap()
+            thumbnail_data = song.get('thumbnail_data')
+            if thumbnail_data:
+                thumbnail_pixmap.loadFromData(thumbnail_data)
+            elif song.get('thumbnail_path'):
+                thumbnail_pixmap = QPixmap(str(song['thumbnail_path']))
+
+            if thumbnail_pixmap and not thumbnail_pixmap.isNull():
+                scaled = thumbnail_pixmap.scaled(
+                    100,
+                    100,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+                win.thumbnail_label.setPixmap(scaled)
+                win.thumbnail_label.setText("")
             else:
-                win.thumbnail_label.setPixmap(QPixmap())
-                win.thumbnail_label.setText("No Art")
-            win.song_list_widget.setCurrentRow(last_index)
+                fallback = QPixmap(str(NO_ART_IMAGE_PATH))
+                scaled = fallback.scaled(
+                    100,
+                    100,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+                win.thumbnail_label.setPixmap(scaled)
+                win.thumbnail_label.setText("")
+            win.song_list_widget.setCurrentCell(last_index, 1)
 
     def _connect_tray_actions(self):
         self.tray_actions['play_pause'].triggered.connect(self.music_player_window.toggle_play_pause)

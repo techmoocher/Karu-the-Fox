@@ -1,16 +1,15 @@
 from pathlib import Path
 from random import shuffle
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+
+from mutagen._file import File as MutagenFile
+from mutagen._util import MutagenError
+from mutagen.id3 import ID3
+from mutagen.id3._util import ID3NoHeaderError
+
+from .constants import NO_ART_IMAGE_PATH
 
 SongData = Dict[str, Any]
-
-
-def _parse_filename(mp3_path: Path) -> tuple[str, str]:
-	stem = mp3_path.stem
-	if "_" in stem:
-		title_part, artist_part = stem.split("_", 1)
-		return title_part.replace("-", " "), artist_part.replace("-", " ")
-	return stem.replace("-", " "), "Unknown Artist"
 
 
 def _find_thumbnail(song_dir: Path) -> Path | None:
@@ -19,6 +18,41 @@ def _find_thumbnail(song_dir: Path) -> Path | None:
 		if candidate.exists():
 			return candidate
 	return None
+
+
+def _first_tag_value(tags: Any, key: str) -> Optional[str]:
+	if not tags:
+		return None
+	values = tags.get(key)
+	if not values:
+		return None
+	if isinstance(values, (list, tuple)):
+		return str(values[0]) if values else None
+	return str(values)
+
+
+def _read_metadata(mp3_path: Path) -> tuple[Optional[str], Optional[str], Optional[bytes]]:
+	title: Optional[str] = None
+	artist: Optional[str] = None
+	art_bytes: Optional[bytes] = None
+
+	try:
+		audio = MutagenFile(mp3_path, easy=True)
+		if audio and audio.tags:
+			title = _first_tag_value(audio.tags, "title")
+			artist = _first_tag_value(audio.tags, "artist")
+	except MutagenError:
+		pass
+
+	try:
+		id3 = ID3(mp3_path)
+		apic_frames = id3.getall("APIC")
+		if apic_frames:
+			art_bytes = apic_frames[0].data
+	except (ID3NoHeaderError, MutagenError, FileNotFoundError):
+		pass
+
+	return title, artist, art_bytes
 
 
 def scan_music_directory(music_dir: Path) -> List[SongData]:
@@ -34,13 +68,15 @@ def scan_music_directory(music_dir: Path) -> List[SongData]:
 			continue
 
 		mp3_path = mp3_files[0]
-		title, artist = _parse_filename(mp3_path)
+		title, artist, art_bytes = _read_metadata(mp3_path)
+		thumbnail_path = _find_thumbnail(song_dir) or NO_ART_IMAGE_PATH
 		songs.append(
 			{
 				"title": title or "Unknown Title",
-				"artist": artist or "Unknown Artist",
+				"artist": artist or "Unknown Author",
 				"path": mp3_path,
-				"thumbnail": _find_thumbnail(song_dir),
+				"thumbnail_path": thumbnail_path,
+				"thumbnail_data": art_bytes,
 			}
 		)
 

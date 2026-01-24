@@ -1,16 +1,31 @@
-from PySide6.QtWidgets import (QDialog, QFrame,
-							   QHBoxLayout, QLabel,
-							   QListWidget, QListWidgetItem,
-							   QPushButton, QSlider,
-							   QStyle, QTextBrowser,
-							   QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (
+	QDialog,
+	QFrame,
+	QHBoxLayout,
+	QLabel,
+	QPushButton,
+	QSlider,
+	QStyle,
+	QTableWidget,
+	QTableWidgetItem,
+	QTextBrowser,
+	QVBoxLayout,
+	QWidget,
+	QHeaderView,
+	QAbstractItemView,
+)
 from PySide6.QtCore import QPoint, Qt, QUrl, QSize
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtMultimedia import QMediaPlayer
 
-from .constants import IMAGE_DIR, MUSIC_DIR, MUSIC_PLAYER_ICON_DIR
+from .constants import IMAGE_DIR, MUSIC_DIR, MUSIC_PLAYER_ICON_DIR, NO_ART_IMAGE_PATH
 from .styles import HELP_HTML, MUSIC_PLAYER_STYLESHEET
-from .utils import format_song_label, format_time
+from .utils import (
+	format_artist_display,
+	format_song_label,
+	format_time,
+	format_title_display,
+)
 from .playlist_control import (
 	build_shuffle_queue,
 	ensure_shuffle_queue,
@@ -159,9 +174,22 @@ class MusicPlayerWindow(QWidget):
 		options_layout.addStretch()
 		options_layout.addWidget(self.help_button)
 
-		self.song_list_widget = QListWidget()
-		self.song_list_widget.setVisible(True)
-		self.song_list_widget.setMinimumHeight(140)
+		self.song_list_widget = QTableWidget()
+		self.song_list_widget.setColumnCount(2)
+		self.song_list_widget.setHorizontalHeaderLabels(["No.", "Available Tracks"])
+		self.song_list_widget.verticalHeader().setVisible(False)
+		self.song_list_widget.horizontalHeader().setStretchLastSection(True)
+		self.song_list_widget.horizontalHeader().setSectionResizeMode(
+			0, QHeaderView.ResizeMode.ResizeToContents
+		)
+		self.song_list_widget.setSelectionBehavior(
+			QAbstractItemView.SelectionBehavior.SelectRows
+		)
+		self.song_list_widget.setEditTriggers(
+			QAbstractItemView.EditTrigger.NoEditTriggers
+		)
+		self.song_list_widget.setShowGrid(False)
+		self.song_list_widget.setMinimumHeight(180)
 		self.song_list_widget.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
 		content_layout.addLayout(info_layout)
@@ -211,7 +239,7 @@ class MusicPlayerWindow(QWidget):
 		self.next_button.clicked.connect(self.next_song)
 		self.prev_button.clicked.connect(self.prev_song)
 		self.loop_button.clicked.connect(self.change_playback_mode)
-		self.song_list_widget.itemDoubleClicked.connect(self.play_from_list)
+		self.song_list_widget.cellDoubleClicked.connect(self.play_from_list)
 		self.media_player.playbackStateChanged.connect(self.update_play_pause_icon)
 		self.media_player.positionChanged.connect(self.update_slider_position)
 		self.media_player.durationChanged.connect(self.set_slider_range)
@@ -240,13 +268,24 @@ class MusicPlayerWindow(QWidget):
 			self.move(event.globalPosition().toPoint() - self.drag_pos)
 
 	def scan_music_directory(self):
-		self.song_list_widget.clear()
+		self.song_list_widget.clearContents()
+		self.song_list_widget.setRowCount(0)
 		self._shuffle_queue = []
 		self.playlist = scan_music_directory(MUSIC_DIR)
 
-		for song_data in self.playlist:
-			item = QListWidgetItem(format_song_label(song_data["title"], song_data["artist"]))
-			self.song_list_widget.addItem(item)
+		self.song_list_widget.setRowCount(len(self.playlist))
+		for idx, song_data in enumerate(self.playlist):
+			number_item = QTableWidgetItem(str(idx + 1))
+			number_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+			number_item.setFlags(number_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+
+			label_item = QTableWidgetItem(
+				format_song_label(song_data["title"], song_data["artist"])
+			)
+			label_item.setFlags(label_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+
+			self.song_list_widget.setItem(idx, 0, number_item)
+			self.song_list_widget.setItem(idx, 1, label_item)
 
 		if not self.playlist:
 			self.title_label.setText("No music found")
@@ -266,21 +305,35 @@ class MusicPlayerWindow(QWidget):
 			song = self.playlist[index]
 			self.media_player.setSource(QUrl.fromLocalFile(str(song["path"].absolute())))
 			self.media_player.play()
-			self.title_label.setText(song["title"])
-			self.artist_label.setText(song["artist"])
-			if song["thumbnail"]:
-				self.thumbnail_label.setPixmap(
-					QPixmap(str(song["thumbnail"])).scaled(
-						100,
-						100,
-						Qt.AspectRatioMode.KeepAspectRatio,
-						Qt.TransformationMode.SmoothTransformation,
-					)
+			self.title_label.setText(format_title_display(song["title"]))
+			self.artist_label.setText(format_artist_display(song["artist"]))
+			thumbnail_pixmap = QPixmap()
+			thumbnail_data = song.get("thumbnail_data")
+			if thumbnail_data:
+				thumbnail_pixmap.loadFromData(thumbnail_data)
+			elif song.get("thumbnail_path"):
+				thumbnail_pixmap = QPixmap(str(song["thumbnail_path"]))
+
+			if thumbnail_pixmap and not thumbnail_pixmap.isNull():
+				scaled = thumbnail_pixmap.scaled(
+					100,
+					100,
+					Qt.AspectRatioMode.KeepAspectRatio,
+					Qt.TransformationMode.SmoothTransformation,
 				)
+				self.thumbnail_label.setPixmap(scaled)
+				self.thumbnail_label.setText("")
 			else:
-				self.thumbnail_label.setPixmap(QPixmap())
-				self.thumbnail_label.setText("No Art")
-			self.song_list_widget.setCurrentRow(index)
+				fallback = QPixmap(str(NO_ART_IMAGE_PATH))
+				scaled = fallback.scaled(
+					100,
+					100,
+					Qt.AspectRatioMode.KeepAspectRatio,
+					Qt.TransformationMode.SmoothTransformation,
+				)
+				self.thumbnail_label.setPixmap(scaled)
+				self.thumbnail_label.setText("")
+			self.song_list_widget.setCurrentCell(index, 1)
 
 	def next_song(self):
 		if not self.playlist:
@@ -374,9 +427,9 @@ class MusicPlayerWindow(QWidget):
 		self.volume_button.setIcon(icon)
 		self.volume_button.setIconSize(self._control_icon_size)
 
-	def play_from_list(self, item):
+	def play_from_list(self, row, _column=None):
 		self.apply_playback_mode("normal")
-		self.play_song(self.song_list_widget.row(item))
+		self.play_song(row)
 
 	def update_play_pause_icon(self, state):
 		if state == QMediaPlayer.PlaybackState.PlayingState:
@@ -400,7 +453,7 @@ class MusicPlayerWindow(QWidget):
 			return
 		if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
 			row = self.song_list_widget.currentRow()
-			if 0 <= row < self.song_list_widget.count():
+			if 0 <= row < self.song_list_widget.rowCount():
 				self.apply_playback_mode("normal")
 				self.play_song(row)
 			return
@@ -413,7 +466,7 @@ class MusicPlayerWindow(QWidget):
 		super().keyPressEvent(event)
 
 	def _move_selection(self, delta):
-		count = self.song_list_widget.count()
+		count = self.song_list_widget.rowCount()
 		if count == 0:
 			return
 		current = self.song_list_widget.currentRow()
@@ -421,8 +474,10 @@ class MusicPlayerWindow(QWidget):
 			new_row = 0 if delta > 0 else count - 1
 		else:
 			new_row = max(0, min(count - 1, current + delta))
-		self.song_list_widget.setCurrentRow(new_row)
-		self.song_list_widget.scrollToItem(self.song_list_widget.currentItem())
+		self.song_list_widget.setCurrentCell(new_row, 1)
+		item = self.song_list_widget.item(new_row, 1)
+		if item:
+			self.song_list_widget.scrollToItem(item)
 
 	def eventFilter(self, obj, event):
 		if obj == self.song_list_widget and event.type() == event.Type.KeyPress:
