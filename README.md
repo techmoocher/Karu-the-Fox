@@ -1,4 +1,16 @@
-# Karu the Fox 🦊
+<div align="center">
+    <h1>【 Karu the Fox 🦊 】</h1>
+</div>
+
+---
+
+<div align="center">
+    <img src="https://img.shields.io/github/last-commit/techmoocher/hyprland-dotfiles?&style=for-the-badge&color=87FFAF&logo=git&logoColor=D9E0EE&labelColor=1E202B" />
+    <img src="https://img.shields.io/github/stars/techmoocher/hyprland-dotfiles?style=for-the-badge&logo=andela&color=FFFF7D&logoColor=D9E0EE&labelColor=1E202B" />
+    <img src="https://img.shields.io/github/repo-size/techmoocher/hyprland-dotfiles?color=A5E1FF&label=SIZE&logo=protondrive&style=for-the-badge&logoColor=D9E0EE&labelColor=1E202B" />
+</div>
+
+---
 
 Karu is a friendly and entertaining virtual desktop pet. Built with Python and PySide6, Karu can chat with you, play music, help you focus with its built-in Pomodoro, and react to your interaction.
 
@@ -8,14 +20,14 @@ Karu is a friendly and entertaining virtual desktop pet. Built with Python and P
 
 <div align="center">
     <a href="https://www.youtube.com/watch?v=LDVFWf0XFPM" target="_blank">
-        <img alt="Karu the Fox Live Demo thumbnail" src="./.github/previews/live-demo-youtube-thumbnail.png" width=80% height=80%/>
+        <img alt="Karu the Fox Live Demo thumbnail" src="./.github/assets/previews/live-demo-youtube-thumbnail.png" width=80% height=80%/>
     </a>
     <p><i>Click the thumbnail above to view Live Demo (YouTube)</i></p>
 </div>
 
 <div align="center">
-    <img alt="Fox standing still" src="./.github/previews/preview-1.jpg" width=250px height=200px/>
-    <img alt="Fox shocked for being airborned" src="./.github/previews/preview-2.jpg" width=250px height=200px/>
+    <img alt="Fox standing still" src="./.github/assets/previews/preview-1.jpg" width=250px height=200px/>
+    <img alt="Fox shocked for being airborned" src="./.github/assets/previews/preview-2.jpg" width=250px height=200px/>
 </div>
 
 ---
