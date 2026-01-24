@@ -1,4 +1,4 @@
-MUSIC_PLAYER_STYLESHEET = r'''
+MUSIC_PLAYER_STYLESHEET = r"""
 	* {
 		font-family: "Press Start 2P", "VT323", "Courier New", monospace;
 		letter-spacing: 0.5px;
@@ -122,7 +122,7 @@ MUSIC_PLAYER_STYLESHEET = r'''
 		padding: 6px;
 		font-size: 10px;
 	}
-'''
+"""
 
 HELP_HTML = """
 <h2>Keybind</h2>

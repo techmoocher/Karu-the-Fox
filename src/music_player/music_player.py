@@ -36,7 +36,7 @@ class MusicPlayerWindow(QWidget):
 
 		self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
 		self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-		self.setWindowTitle("Music with Karu")
+		self.setWindowTitle("Karu the Fox — Dance with Karu")
 		self.setWindowIcon(QIcon(str(IMAGE_DIR / "logo.png")))
 		self.setMinimumSize(420, 220)
 		self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -179,7 +179,7 @@ class MusicPlayerWindow(QWidget):
 		title_bar_layout.setContentsMargins(10, 0, 0, 0)
 		title_bar_layout.setSpacing(10)
 
-		title_label = QLabel("Dance with Karu")
+		title_label = QLabel("Karu the Fox - Dance with Karu")
 		title_label.setStyleSheet("font-weight: bold; color: #000000;")
 
 		self.minimize_button = QPushButton("—")
