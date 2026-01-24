@@ -1,6 +1,6 @@
 # Karu the Fox 🦊
 
-Karu is a clever and friendly virtual desktop pet . Built with Python and PySide6, Karu can chat with you, play music, and react to your presence.
+Karu is a friendly and entertaining virtual desktop pet. Built with Python and PySide6, Karu can chat with you, play music, help you focus with its built-in Pomodoro, and react to your interaction.
 
 ---
 
@@ -29,16 +29,6 @@ Karu is a clever and friendly virtual desktop pet . Built with Python and PySide
 * **System Tray Menu:** A right-click system tray icon gives you quick access to all of Karu's features, including the chat, music player, and exit button.
 
 ---
-
-<!-- ## 🖼️ Screenshots
-
-*(Replace these with actual screenshots of your app)*
-
-| Chat Window | Music Player |
-| :---: | :---: |
-| `` | `` |
-
---- -->
 
 ## 💻 Technology Stack
 
@@ -109,38 +99,35 @@ This project uses the Gemini API, which requires a secret key.
 
 ### 5. (Optional) Add Your Music
 
-The music player scans the `assets/music/` folder. For the app to find your songs, you must follow a specific folder structure:
+The music player scans audio files placed directly in `assets/music/`.
 
-```
-assets/music/
-│
-├── My-Favorite-Song/
-│    ├── My-Favorite-Song_Author-Name.mp3
-│    └── thumbnail.jpg
-│
-└── Another-Song/
-     ├── Another-Song_Author-Name.mp3
-     └── thumbnail.png
-```
+**Supported formats:** `.mp3`, `.wav`, `.m4a`
 
-***Example:***
+***About Album art:*** Embedded art in the file is used when available. If no art is found, the `assets/images/music-player/no-art-found.png` placeholder is used.
 
-```
-assets/music/
-│
-├── Interstellar-Main-Theme/
-│    ├── Interstellar-Main-Theme_Hans-Zimmer.mp3
-│    └── thumbnail.jpg
-│
-└── Nang-Tho/
-     ├── Nang-Tho_Hoang-Dung.mp3
-     └── thumbnail.png
-```
+**Example directory structure:**
 
-**Notes:**
-*- Each song **must** be in its own sub-folder.*
-*- The app will look for the first `.mp3` file in provided sub-folder.*
-*- The app will look for a `thumbnail.jpg`, `thumbnail.png`, or `thumbnail.jfif` file for the album art.*
+``` bash
+Karu-the-Fox/
+│
+├── assets/
+│   ├── fonts/
+│   ├── images/
+│   ├── music/
+│   │   ├── track1.mp3
+│   │   ├── track2.wav
+│   │   ├── track3.m4a
+│   │   └── ...
+│   └── sounds/
+│
+├── previews/
+├── src/
+├── config.json
+├── main.py
+├── requirements.txt
+├── .env
+└── .env.example
+```
 
 ### 6. Run the App
 
@@ -156,38 +143,39 @@ python main.py
 
 Here's a quick overview of the project's layout:
 
-```
+``` bash
 Karu-the-Fox/
 │
-├── .env                # Your secret API key
-├── .env.example        # API key template
-├── config.json         # Stores music player settings
-├── main.py             # The main entry point for the app
-├── requirements.txt    # Python dependencies
-│
-├── assets/
+├── assets/             # App assets
 │   ├── fonts/          # Bundled fonts (NerdFontSymbolsOnly for chat icons)
 │   ├── images/         # App icons, fox sprites, UI art
-│   │   ├── control-buttons/
 │   │   ├── fox/
 │   │   ├── hydration-exercises/
+│   │   ├── music-player/
+│   │   ├── others/
 │   │   └── pomodoro/
-│   ├── music/          # Folder for your music (see setup)
+│   ├── music/          # Folder for your music (see above)
 │   └── sounds/         # SFX for interactions
 │
 ├── previews/           # Preview images and thumbnails
-└── src/                # All application source code
-    ├── __init__.py
-    ├── chat.py         # Chat window UI and API logic
-    ├── constants.py    # Manages all file paths
-    ├── desktop_pet.py  # The core DesktopPet class and logic
-    ├── music_player.py # The music player UI and logic
-    ├── onboarding.py   # Speech bubble and dialog classes
-    └── pomodoro.py     # Pomodoro timer UI and logic
+├── src/                # All application source code
+│   ├── __init__.py
+│   ├── chat.py         # Chat window UI and API logic
+│   ├── constants.py    # Manages all file paths
+│   ├── desktop_pet.py  # The core DesktopPet class and logic
+│   ├── music_player.py # The music player UI and logic
+│   ├── onboarding.py   # Speech bubble and dialog classes
+│   └── pomodoro.py     # Pomodoro timer UI and logic
+│
+├── config.json         # Stores settings
+├── main.py             # The main entry point for the app
+├── requirements.txt    # Python dependencies
+├── .env                # Your secret API key
+└── .env.example        # API key template
 ```
 
 ---
 
 ## 📄 License
 
-This project is licensed under the GNU General Public License v3.0. See [LICENSE](./LICENSE) for more details.
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for more details.
