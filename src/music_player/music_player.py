@@ -244,6 +244,8 @@ class MusicPlayerWindow(QWidget):
 		self.close_button.setFixedSize(30, 30)
 		self.minimize_button.setObjectName("WindowButton")
 		self.close_button.setObjectName("WindowButton")
+		self.minimize_button.setToolTip("Minimize music player")
+		self.close_button.setToolTip("Hide music player")
 
 		title_bar_layout.addWidget(title_label)
 		title_bar_layout.addStretch()

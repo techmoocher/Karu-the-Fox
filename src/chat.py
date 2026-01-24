@@ -74,9 +74,11 @@ class ChatWindow(QWidget):
         self.minimize_button = QPushButton("—")
         self.minimize_button.setFixedSize(30, 30)
         self.minimize_button.setObjectName("WindowButton")
+        self.minimize_button.setToolTip("Minimize chat")
         self.close_button = QPushButton("✕")
         self.close_button.setFixedSize(30, 30)
         self.close_button.setObjectName("WindowButton")
+        self.close_button.setToolTip("Hide chat")
         title_bar_layout.addWidget(title_label)
         title_bar_layout.addStretch()
         title_bar_layout.addWidget(self.minimize_button)
@@ -213,9 +215,6 @@ class ChatWindow(QWidget):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Slash:
             self.input_box.setFocus()
-            if not self.input_box.text():
-                self.input_box.setText("/")
-                self.input_box.setCursorPosition(len(self.input_box.text()))
             event.accept()
             return
         super().keyPressEvent(event)
