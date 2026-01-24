@@ -5,18 +5,11 @@ from typing import Dict, List
 from PySide6.QtCore import QPoint, QTimer, Qt, QUrl
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
-from PySide6.QtWidgets import (
-	QComboBox,
-	QDialog,
-	QFrame,
-	QHBoxLayout,
-	QLabel,
-	QPushButton,
-	QSlider,
-	QVBoxLayout,
-	QWidget,
-	QSystemTrayIcon,
-)
+from PySide6.QtWidgets import (QComboBox, QDialog,
+							   QFrame, QHBoxLayout,
+							   QLabel, QPushButton,
+							   QSlider, QVBoxLayout,
+							   QWidget, QSystemTrayIcon)
 
 from ..constants import IMAGE_DIR, LOGO_ICON, MUSIC_DIR
 from .assets import load_fox_icons, load_tomato_sprites

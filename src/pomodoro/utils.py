@@ -3,7 +3,6 @@ from __future__ import annotations
 MIN_MINUTES = 10
 MAX_MINUTES = 60
 
-
 def clamp_duration_minutes(minutes: int | float | None) -> int:
 	"""Clamp the duration to the allowed slider range."""
 

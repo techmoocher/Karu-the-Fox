@@ -12,8 +12,9 @@ from PySide6.QtWidgets import (QWidget, QLabel,
 from PySide6.QtGui import QIcon, QFontDatabase
 from PySide6.QtCore import Qt, QPoint, QUrl
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
-from .constants import LOGO_ICON, NERD_FONT_SYMBOLS
+from .constants import LOGO_ICON, FONTS_DIR
 
+NERD_FONT_SYMBOLS = FONTS_DIR / "NerdFontsSymbolsOnly" / "SymbolsNerdFont-Regular.ttf"
 
 class ChatWindow(QWidget):
     def __init__(self, parent=None):
