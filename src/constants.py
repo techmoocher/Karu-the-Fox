@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 SOURCE_DIR = Path(__file__).resolve().parent 
 
 BASE_DIR = SOURCE_DIR.parent
