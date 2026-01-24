@@ -158,7 +158,7 @@ Karu-the-Fox/
 │   └── sounds/         # SFX for interactions
 │
 ├── previews/           # Preview images and thumbnails
-├── src/                # All application source code
+├── src/                # Application source code
 │   ├── __init__.py
 │   ├── chat.py         # Chat window UI and API logic
 │   ├── constants.py    # Manages all file paths
