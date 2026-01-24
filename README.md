@@ -34,10 +34,10 @@ Karu is a friendly and entertaining virtual desktop pet. Built with Python and P
 
 ## ✨ Features
 
+* **Desktop Animations:** Karu doesn't just sit there—it walks, sleeps, pauses, and reacts to being dragged around.
 * **Interactive AI Chat:** Have a real conversation with Karu, powered by the Google Gemini API. Karu has a unique, supportive, and slightly sassy personality.
 * **Built-in Music Player:** A sleek, self-contained music player that scans your local `assets/music/` folder and remembers your volume and song settings.
-* **Dynamic Onboarding:** On first launch, Karu greets you and asks about your day with a simple mood survey.
-* **Desktop Animations:** Karu doesn't just sit there—it walks, sleeps, pauses, and reacts to being dragged around.
+* **Pomodoro Timer:** Stay productive with Karu's built-in Pomodoro timer, complete with customizable work and break intervals.
 * **System Tray Menu:** A right-click system tray icon gives you quick access to all of Karu's features, including the chat, music player, and exit button.
 
 ---
@@ -52,11 +52,11 @@ Karu is a friendly and entertaining virtual desktop pet. Built with Python and P
 
 ## 🚀 Getting Started
 
-Follow these steps to set up and run the project on your local machine.
+Follow the following steps to set up and run the project on your local machine.
 
 ### 1. Prerequisites
 
-Make sure you have **Python 3.10** or newer installed.
+Make sure you have **Python 3.10** or newer installed. For more information, visit the [official Python Docs](https://wiki.python.org/moin/BeginnersGuide/Download) and the [official Python Downloads page](https://www.python.org/downloads/).
 
 ### 2. Clone the Repository
 
