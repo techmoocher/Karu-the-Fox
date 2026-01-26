@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (QComboBox, QDialog,
 							   QSlider, QVBoxLayout,
 							   QWidget, QSystemTrayIcon)
 
-from ..constants import IMAGE_DIR, LOGO_ICON, MUSIC_DIR
+from ..constants import IMAGE_DIR, LOGO_ICON, SFX_DIR
 from .assets import load_fox_icons, load_tomato_sprites
 from .themes import DEFAULT_THEME, THEMES as THEME_MAP, build_stylesheet, resolve_theme
 from .utils import can_reset_timer, clamp_duration_minutes, seconds_to_clock
@@ -330,7 +330,7 @@ class PomodoroWindow(QWidget):
 			)
 
 	def _start_alert_sound(self):
-		alert_path = MUSIC_DIR / "pomodoro-alert.mp3"
+		alert_path = SFX_DIR / "pomodoro-alert.mp3"
 		if not alert_path.exists():
 			return
 		try:
