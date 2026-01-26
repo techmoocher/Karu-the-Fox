@@ -16,6 +16,7 @@ from .assets import load_fox_icons, load_tomato_sprites
 from .themes import DEFAULT_THEME, THEMES as THEME_MAP, build_stylesheet, resolve_theme
 from .utils import can_reset_timer, clamp_duration_minutes, seconds_to_clock
 
+ALERT_PATH = SFX_DIR / "pomodoro" / "pomodoro-alert.mp3"
 
 class PomodoroWindow(QWidget):
 	THEMES = THEME_MAP
@@ -330,7 +331,7 @@ class PomodoroWindow(QWidget):
 			)
 
 	def _start_alert_sound(self):
-		alert_path = SFX_DIR / "pomodoro-alert.mp3"
+		alert_path = ALERT_PATH
 		if not alert_path.exists():
 			return
 		try:
